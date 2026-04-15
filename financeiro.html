@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM Pro - Financeiro</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-mode">
+
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <h3>Menu</h3>
+    </div>
+    <ul class="nav-links">
+        <li><a href="index.html">Vendas</a></li>
+        <li><a href="#" class="active">Financeiro</a></li>
+        <li><a href="cs.html">CS</a></li>
+        <li><a href="trafego.html">Gestão de Tráfego</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+    <div class="container" style="max-width: 1400px;">
+        <h2>💰 Gestão Financeira</h2>
+        
+        <div class="filter-container">
+            <div class="field">
+                <label>Vendedor</label>
+                <select id="filtroVendedorFin">
+                    <option value="todos">Todos</option>
+                    <option>Ronny</option><option>Névio</option><option>Marysol</option>
+                    <option>Victor</option><option>Bianca</option><option>Wagner</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Mês Referência</label>
+                <select id="filtroMesFin">
+                    <option value="todos">Todos</option>
+                    <option>Janeiro</option><option>Fevereiro</option><option>Março</option>
+                    <option>Abril</option><option>Maio</option><option>Junho</option>
+                    <option>Julho</option><option>Agosto</option><option>Setembro</option>
+                    <option>Outubro</option><option>Novembro</option><option>Dezembro</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Ano</label>
+                <select id="filtroAnoFin">
+                    <option value="todos">Todos os Anos</option>
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                    <option value="2026" selected>2026</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Vendedor</th>
+                        <th>Cliente</th>
+                        <th>Telefone</th>
+                        <th>Vigência</th>
+                        <th>Data 1° Pagto</th>
+                        <th>Mensalidade</th>
+                        <th>Vlr. Inicial</th>
+                        <th>Pago</th>
+                        <th>Forma Pgto</th>
+                        <th>Vezes</th>
+                    </tr>
+                </thead>
+                <tbody id="listaFinanceiroCorpo"></tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<script type="module" src="financeiro.js"></script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Login | Agência Digital Talismã</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body { display: flex; align-items: center; justify-content: center; height: 100vh; background: var(--bg); }
+        .login-container { width: 100%; max-width: 400px; padding: 20px; animation: fadeIn 0.8s ease; }
+        .login-logo { text-align: center; margin-bottom: 40px; }
+        .login-logo h1 { font-size: 2rem; background: linear-gradient(45deg, var(--accent), #00d4ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; }
+        #errorMessage { color: var(--danger); font-size: 0.8rem; text-align: center; margin-top: 10px; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="login-container">
+    <div class="login-logo">
+        <h1>TALISMÃ</h1>
+        <p style="color: var(--text-secondary); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px;">Agência Digital</p>
+    </div>
+
+    <div class="form-card">
+        <form id="loginForm">
+            <div class="field" style="margin-bottom: 20px;">
+                <label>E-mail Corporativo</label>
+                <input type="email" id="email" required>
+            </div>
+            <div class="field">
+                <label>Palavra-passe</label>
+                <input type="password" id="password" required>
+            </div>
+            <div id="errorMessage">Usuário ou senha incorretos.</div>
+            <button type="submit" id="btnSalvar" style="width: 100%; margin-top: 25px;">Aceder ao Painel</button>
+        </form>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyARsHedCxsS4n3s6WxEopEDXzQPWAjrhp8",
+        authDomain: "controle-de-gestao-976f4.firebaseapp.com",
+        projectId: "controle-de-gestao-976f4",
+        storageBucket: "controle-de-gestao-976f4.firebasestorage.app",
+        messagingSenderId: "424359580737",
+        appId: "1:424359580737:web:5d40c4213aa732171da2c0"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    document.getElementById('loginForm').addEventListener('submit', (e) => {
+        e.preventDefault();
+        const email = document.getElementById('email').value;
+        const password = document.getElementById('password').value;
+        const errorDiv = document.getElementById('errorMessage');
+
+        signInWithEmailAndPassword(auth, email, password)
+            .then((userCredential) => {
+                window.location.href = "index.html";
+            })
+            .catch((error) => {
+                errorDiv.style.display = 'block';
+                console.error(error.message);
+            });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM Pro - Gestão de Vendas</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/imask"></script>
+</head>
+<body class="dark-mode">
+
+<nav class="sidebar">
+    <div class="sidebar-header">
+        <h3>Menu</h3>
+    </div>
+    <ul class="nav-links">
+        <li><a href="#" class="active">Vendas</a></li>
+        <li><a href="financeiro.html">Financeiro</a></li>
+        <li><a href="cs.html">CS</a></li>
+        <li><a href="trafego.html">Gestão de Tráfego</a></li>
+    </ul>
+</nav>
+
+<main class="main-content">
+    <div class="container">
+        <h2>🚀 Cadastro de Nova Venda</h2>
+        <form id="vendaForm">
+            <div class="grid-form">
+                <div class="field">
+                    <label>Vendedor Responsável</label>
+                    <select id="vendedor" required>
+                        <option value="">Selecione...</option>
+                        <option>Ronny</option><option>Névio</option><option>Marysol</option>
+                        <option>Victor</option><option>Bianca</option><option>Wagner</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Nome do Cliente</label>
+                    <input type="text" id="nomeCliente" placeholder="Nome Completo" required>
+                </div>
+
+                <div class="field">
+                    <label>Telefone</label>
+                    <input type="text" id="telefone" placeholder="(00) 00000-0000" required>
+                </div>
+
+                <div class="field">
+                    <label>Plano Contratado</label>
+                    <select id="plano" required>
+                        <option value="">Selecione...</option>
+                        <option>Platina</option><option>Safira</option><option>Talismã</option>
+                        <option>Plattina + Social mídia</option><option>Safira + Social mídia</option>
+                        <option>Talismã + Social mídia</option><option>Somente IA</option>
+                        <option>Somente LP</option><option>Somente CRM</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Vigência</label>
+                    <select id="vigencia">
+                        <option>1 mês</option><option>2 meses</option><option>3 meses</option>
+                        <option>6 meses</option><option>12 meses</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Área de Atuação</label>
+                    <select id="area">
+                        <option>Previdenciário</option><option>Trabalhista</option>
+                        <option>Criminal</option><option>Familia</option>
+                        <option>Cívil</option><option>Tributário</option>
+                        <option>Rural</option><option>Internacional</option>
+                        <option>Outros</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Perfil do Cliente</label>
+                    <select id="perfil">
+                        <option>Iniciante</option><option>Intermediário</option><option>Avançado</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Primeiro Pagamento (Mês)</label>
+                    <select id="pagamentoMes">
+                        <option>Janeiro</option><option>Fevereiro</option><option>Março</option>
+                        <option>Abril</option><option>Maio</option><option>Junho</option>
+                        <option>Julho</option><option>Agosto</option><option>Setembro</option>
+                        <option>Outubro</option><option>Novembro</option><option>Dezembro</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Tipo de Campanha</label>
+                    <select id="tipoCampanha">
+                        <option>Nova</option><option>Renovação</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Investimento Mensal</label>
+                    <input type="text" id="investimento" placeholder="R$ 0,00" required>
+                </div>
+
+                <div class="field">
+                    <label>Mensalidade do plano</label>
+                    <input type="text" id="mensalidadePlano" placeholder="R$ 0,00" required>
+                </div>
+
+                <div class="field">
+                    <label>Pagamento Inicial</label>
+                    <input type="text" id="pagamentoInicial" placeholder="R$ 0,00" required>
+                </div>
+
+                <div class="field">
+                    <label>Data pgto inicial</label>
+                    <input type="text" id="dataPgtoInicial" placeholder="DD/MM/AAAA" required>
+                </div>
+
+                <div class="field">
+                    <label>Forma de Pagamento</label>
+                    <select id="formaPagamento">
+                        <option>Boleto</option><option>PIX</option><option>Cartão de crédito</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Instagram do Cliente</label>
+                    <input type="text" id="instagram" placeholder="@usuario">
+                </div>
+
+                <div class="field">
+                    <label>Já investia em tráfego?</label>
+                    <select id="jaInvestia">
+                        <option>Sim</option><option>Não</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit" id="btnSalvar">Salvar Venda</button>
+        </form>
+
+        <div class="divider"></div>
+
+        <div class="filter-container">
+            <div class="field">
+                <label>Filtrar por Vendedor</label>
+                <select id="filtroVendedor">
+                    <option value="todos">Todos os Vendedores</option>
+                    <option>Ronny</option><option>Névio</option><option>Marysol</option>
+                    <option>Victor</option><option>Bianca</option><option>Wagner</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Filtrar por Mês</label>
+                <select id="filtroMes">
+                    <option value="todos">Todos os Meses</option>
+                    <option>Janeiro</option><option>Fevereiro</option><option>Março</option>
+                    <option>Abril</option><option>Maio</option><option>Junho</option>
+                    <option>Julho</option><option>Agosto</option><option>Setembro</option>
+                    <option>Outubro</option><option>Novembro</option><option>Dezembro</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Filtrar por Ano</label>
+                <select id="filtroAno">
+                    <option value="todos">Todos os Anos</option>
+                    <option value="2024">2024</option>
+                    <option value="2025">2025</option>
+                    <option value="2026" selected>2026</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="dashboard">
+            <div class="card-total">
+                <span>Total Mensalidades</span>
+                <h3 id="totalMensalidades">R$ 0,00</h3>
+            </div>
+            <div class="card-total">
+                <span>Total Entradas</span>
+                <h3 id="totalEntradas">R$ 0,00</h3>
+            </div>
+        </div>
+
+        <h2>📋 Lista de Clientes</h2>
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Cliente</th>
+                        <th>Vendedor</th>
+                        <th>Plano</th>
+                        <th>Mensalidade</th>
+                        <th>Entrada</th>
+                        <th>Telefone</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="listaVendasCorpo"></tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
