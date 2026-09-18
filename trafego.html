@@ -5,6 +5,133 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CRM Pro - Gestão de Tráfego</title>
     <link rel="stylesheet" href="style.css">
+    <style>
+        .tabs-squad {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+        .tab-btn {
+            background: var(--input);
+            color: #aaa;
+            border: 1px solid var(--border);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+        .tab-btn:hover {
+            color: var(--text);
+            border-color: var(--accent);
+        }
+        .tab-btn.active {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        /* Estilização dos Selects Coloridos */
+        .select-status {
+            padding: 6px 10px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.85rem;
+            border: 1px solid var(--border);
+            outline: none;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+        }
+
+        /* Cores de Campanha */
+        .select-status.rodando {
+            background-color: rgba(0, 255, 136, 0.2);
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+        .select-status.pausada {
+            background-color: rgba(255, 153, 0, 0.2);
+            color: #ff9900;
+            border-color: #ff9900;
+        }
+        .select-status.encerrada {
+            background-color: rgba(255, 68, 68, 0.2);
+            color: #ff4444;
+            border-color: #ff4444;
+        }
+
+        /* Cores de Satisfação */
+        .select-status.satisfeito {
+            background-color: rgba(0, 255, 136, 0.2);
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+        .select-status.alerta {
+            background-color: rgba(255, 204, 0, 0.2);
+            color: #ffcc00;
+            border-color: #ffcc00;
+        }
+        .select-status.insatisfeito {
+            background-color: rgba(255, 68, 68, 0.2);
+            color: #ff4444;
+            border-color: #ff4444;
+        }
+
+        /* Cores de Tendência */
+        .select-status.subir {
+            background-color: rgba(255, 68, 68, 0.2);
+            color: #ff4444;
+            border-color: #ff4444;
+        }
+        .select-status.manter {
+            background-color: rgba(0, 122, 255, 0.2);
+            color: #3399ff;
+            border-color: #007aff;
+        }
+        .select-status.descer {
+            background-color: rgba(0, 255, 136, 0.2);
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+
+        /* Campos Editáveis em Reais e Textareas */
+        .input-real-trafego {
+            width: 110px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--input);
+            color: var(--text);
+            font-size: 0.85rem;
+            outline: none;
+        }
+
+        .input-textarea-trafego {
+            width: 100%;
+            min-width: 180px;
+            min-height: 55px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--input);
+            color: var(--text);
+            font-size: 0.85rem;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table th {
+            white-space: nowrap;
+        }
+    </style>
 </head>
 <body class="dark-mode">
 
@@ -21,9 +148,16 @@
 </nav>
 
 <main class="main-content">
-    <div class="container" style="max-width: 1500px;">
+    <div class="container" style="max-width: 1700px;">
         <h2>🎯 Gestão de Tráfego</h2>
         
+        <!-- ABAS DE SQUADS -->
+        <div class="tabs-squad">
+            <button class="tab-btn active" data-squad="todos">Todos</button>
+            <button class="tab-btn" data-squad="Squad Black Mamba">Squad Black Mamba</button>
+            <button class="tab-btn" data-squad="Squad Titans">Squad Titans</button>
+        </div>
+
         <div class="filter-container">
             <div class="field">
                 <label>Vendedor</label>
@@ -62,9 +196,15 @@
                         <th>Vendedor</th>
                         <th>Cliente</th>
                         <th>Telefone</th>
+                        <th>Campanha</th>
+                        <th>Satisfação</th>
+                        <th style="min-width: 120px;">CPL</th>
+                        <th style="min-width: 140px;">Tendência</th>
+                        <th style="min-width: 120px;">Orçamento</th>
+                        <th style="min-width: 120px;">Saldo Restante</th>
                         <th>Área de Atuação</th>
-                        <th>Teses (CS)</th>
-                        <th>Observações (CS)</th>
+                        <th style="min-width: 190px;">Teses (CS)</th>
+                        <th style="min-width: 190px;">Observações (CS)</th>
                         <th>Social Mídia</th>
                     </tr>
                 </thead>

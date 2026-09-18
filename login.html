@@ -2,38 +2,42 @@
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login | Agência Digital Talismã</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        body { display: flex; align-items: center; justify-content: center; height: 100vh; background: var(--bg); }
-        .login-container { width: 100%; max-width: 400px; padding: 20px; animation: fadeIn 0.8s ease; }
-        .login-logo { text-align: center; margin-bottom: 40px; }
-        .login-logo h1 { font-size: 2rem; background: linear-gradient(45deg, var(--accent), #00d4ff); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-transform: uppercase; }
-        #errorMessage { color: var(--danger); font-size: 0.8rem; text-align: center; margin-top: 10px; display: none; }
-    </style>
 </head>
-<body>
+<body class="login-page">
 
 <div class="login-container">
     <div class="login-logo">
         <h1>TALISMÃ</h1>
-        <p style="color: var(--text-secondary); text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px;">Agência Digital</p>
+        <p>Agência Digital</p>
     </div>
 
     <div class="form-card">
         <form id="loginForm">
             <div class="field" style="margin-bottom: 20px;">
-                <label>E-mail Corporativo</label>
-                <input type="email" id="email" required>
+                <label>E-mail de Acesso</label>
+                <input type="email" id="email" placeholder="admin@agenciatalisma.com" required>
             </div>
-            <div class="field">
+
+            <div class="field" style="margin-bottom: 10px;">
                 <label>Palavra-passe</label>
-                <input type="password" id="password" required>
+                <input type="password" id="senha" placeholder="••••••••" required>
             </div>
-            <div id="errorMessage">Usuário ou senha incorretos.</div>
-            <button type="submit" id="btnSalvar" style="width: 100%; margin-top: 25px;">Aceder ao Painel</button>
+
+            <div id="loginError" style="color: var(--danger); font-size: 0.8rem; margin-bottom: 15px; display: none;">
+                E-mail ou senha incorretos.
+            </div>
+
+            <button type="submit" id="btnSalvar" style="width: 100%; margin-top: 10px;">
+                Entrar no Painel
+            </button>
         </form>
     </div>
+    <p style="text-align: center; color: #444; font-size: 0.7rem; margin-top: 20px;">
+        &copy; 2026 Agência Digital Talismã
+    </p>
 </div>
 
 <script type="module">
@@ -52,19 +56,21 @@
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
-    document.getElementById('loginForm').addEventListener('submit', (e) => {
+    const loginForm = document.getElementById('loginForm');
+    const errorMsg = document.getElementById('loginError');
+
+    loginForm.addEventListener('submit', (e) => {
         e.preventDefault();
         const email = document.getElementById('email').value;
-        const password = document.getElementById('password').value;
-        const errorDiv = document.getElementById('errorMessage');
+        const senha = document.getElementById('senha').value;
 
-        signInWithEmailAndPassword(auth, email, password)
-            .then((userCredential) => {
+        signInWithEmailAndPassword(auth, email, senha)
+            .then(() => {
                 window.location.href = "index.html";
             })
             .catch((error) => {
-                errorDiv.style.display = 'block';
-                console.error(error.message);
+                errorMsg.style.display = 'block';
+                console.error("Erro no login:", error.message);
             });
     });
 </script>
