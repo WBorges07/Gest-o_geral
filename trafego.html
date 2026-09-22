@@ -131,20 +131,44 @@
         table th {
             white-space: nowrap;
         }
+
+        /* Estilização do Botão Sair no Menu */
+        .btn-logout {
+            margin-top: auto;
+            background: rgba(255, 68, 68, 0.15);
+            color: #ff4444;
+            border: 1px solid #ff4444;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            text-align: center;
+            transition: var(--transition);
+        }
+        .btn-logout:hover {
+            background: #ff4444;
+            color: #fff;
+        }
     </style>
 </head>
 <body class="dark-mode">
 
-<nav class="sidebar">
-    <div class="sidebar-header">
-        <h3>Menu</h3>
+<nav class="sidebar" style="display: flex; flex-direction: column; justify-content: space-between; height: 100vh;">
+    <div>
+        <div class="sidebar-header">
+            <h3>Menu</h3>
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html">Vendas</a></li>
+            <li><a href="financeiro.html">Financeiro</a></li>
+            <li><a href="cs.html">CS</a></li>
+            <li><a href="#" class="active">Gestão de Tráfego</a></li>
+        </ul>
     </div>
-    <ul class="nav-links">
-        <li><a href="index.html">Vendas</a></li>
-        <li><a href="financeiro.html">Financeiro</a></li>
-        <li><a href="cs.html">CS</a></li>
-        <li><a href="#" class="active">Gestão de Tráfego</a></li>
-    </ul>
+    <div style="padding: 15px;">
+        <button id="btnSair" class="btn-logout">🚪 Sair</button>
+    </div>
 </nav>
 
 <main class="main-content">

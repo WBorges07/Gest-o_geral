@@ -20,13 +20,48 @@ onAuthStateChanged(auth, (user) => {
     if (!user) window.location.href = "login.html";
 });
 
+// Listener para o botão Sair
+const btnSair = document.getElementById('btnSair');
+if (btnSair) {
+    btnSair.addEventListener('click', () => {
+        signOut(auth).then(() => {
+            window.location.href = "login.html";
+        }).catch((error) => {
+            console.error("Erro ao fazer logout:", error);
+        });
+    });
+}
+
 const vendaForm = document.getElementById('vendaForm');
+const selVendedor = document.getElementById('filtroVendedor');
+const selMes = document.getElementById('filtroMes');
+const selAno = document.getElementById('filtroAno');
+const listaCorpo = document.getElementById('listaVendasCorpo');
+
+let dadosVendas = [];
+
+// Função auxiliar para converter moeda (R$) para valor numérico
+const parseMoeda = (str) => {
+    if (!str) return 0;
+    const num = str.replace(/[^\d,-]/g, '').replace(',', '.');
+    return parseFloat(num) || 0;
+};
+
+// Função auxiliar para formatar números para formato BRL (R$)
+const formatarMoeda = (val) => {
+    return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+};
+
 if (vendaForm) {
     vendaForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
         const campoAno = document.getElementById('filtroAno');
         const anoParaSalvar = (campoAno && campoAno.value !== "todos") ? campoAno.value : "2026";
+
+        const mensalidade = document.getElementById('mensalidadePlano').value;
+        const entrada = document.getElementById('pagamentoInicial').value;
+        const formaPgto = document.getElementById('formaPagamento').value;
 
         const novaVenda = {
             // Campos de identificação e contato
@@ -37,14 +72,18 @@ if (vendaForm) {
             // Campos do Plano
             plano: document.getElementById('plano').value,
             vigencia: document.getElementById('vigencia').value,
-            mensalidadePlano: document.getElementById('mensalidadePlano').value,
+            mensalidadePlano: mensalidade,
             
-            // Campos Financeiros (Enviados diretamente para leitura no financeiro.js)
-            pagamentoInicial: document.getElementById('pagamentoInicial').value,
+            // Campos Financeiros
+            valorTotal: mensalidade,
+            valorEntrada: entrada,
+            formaEntrada: formaPgto,
+            pagamentoInicial: entrada,
             dataPgtoInicial: document.getElementById('dataPgtoInicial').value,
             primeiroPagamentoMes: document.getElementById('pagamentoMes').value,
             primeiroPagamentoAno: anoParaSalvar,
-            formaPagamento: document.getElementById('formaPagamento').value,
+            formaPagamento: formaPgto,
+            statusFinanceiro: "Pendente",
             pago: false,
             vezes: "1",
 
@@ -55,7 +94,7 @@ if (vendaForm) {
             investimentoMensal: document.getElementById('investimento').value,
             instagramCliente: document.getElementById('instagram').value,
             jaInvestia: document.getElementById('jaInvestia').value,
-            onboarding: false,
+            onboardingAconteceu: false,
             dataCadastro: serverTimestamp()
         };
 
@@ -70,34 +109,69 @@ if (vendaForm) {
     });
 }
 
-// Listagem na página inicial (Vendas)
-const listaCorpo = document.getElementById('listaVendasCorpo');
-if (listaCorpo) {
-    onSnapshot(query(collection(db, "vendas"), orderBy("dataCadastro", "desc")), (snap) => {
-        listaCorpo.innerHTML = "";
-        snap.forEach(docSnap => {
-            const d = docSnap.data();
-            const dataF = d.dataCadastro ? d.dataCadastro.toDate().toLocaleDateString('pt-BR') : "--/--/----";
+// Renderização da tabela e atualização dos totais
+const renderizarVendas = () => {
+    if (!listaCorpo) return;
+
+    const vFiltro = selVendedor ? selVendedor.value : "todos";
+    const mFiltro = selMes ? selMes.value : "todos";
+    const aFiltro = selAno ? selAno.value : "todos";
+
+    listaCorpo.innerHTML = "";
+    let totalMensalidades = 0;
+    let totalEntradas = 0;
+
+    dadosVendas.forEach(d => {
+        const dataObjeto = d.dataCadastro?.seconds ? new Date(d.dataCadastro.seconds * 1000) : null;
+        const anoVenda = dataObjeto ? dataObjeto.getFullYear().toString() : "";
+
+        const vBate = vFiltro === "todos" || d.vendedor === vFiltro;
+        const mBate = mFiltro === "todos" || d.primeiroPagamentoMes === mFiltro;
+        const aBate = aFiltro === "todos" || anoVenda === aFiltro;
+
+        if (vBate && mBate && aBate) {
+            totalMensalidades += parseMoeda(d.mensalidadePlano || d.valorTotal);
+            totalEntradas += parseMoeda(d.pagamentoInicial || d.valorEntrada);
+
+            const dataF = dataObjeto ? dataObjeto.toLocaleDateString('pt-BR') : "--/--/----";
             listaCorpo.innerHTML += `
                 <tr>
                     <td>${dataF}</td>
-                    <td>${d.cliente || ''}</td>
+                    <td style="font-weight: bold;">${d.cliente || ''}</td>
                     <td>${d.vendedor || ''}</td>
                     <td>${d.plano || ''}</td>
-                    <td>${d.mensalidadePlano || ''}</td>
-                    <td>${d.pagamentoInicial || ''}</td>
+                    <td>${d.mensalidadePlano || d.valorTotal || ''}</td>
+                    <td>${d.pagamentoInicial || d.valorEntrada || ''}</td>
                     <td>${d.telefone || ''}</td>
-                    <td><button onclick="excluirVenda('${docSnap.id}')" style="color:var(--danger); background:none; border:none; cursor:pointer;">Excluir</button></td>
+                    <td><button onclick="excluirVenda('${d.id}')" style="color:var(--danger); background:none; border:none; cursor:pointer;">Excluir</button></td>
                 </tr>`;
-        });
+        }
     });
+
+    // Atualização dos Cards de Total
+    const elTotalMensalidades = document.getElementById('totalMensalidades');
+    const elTotalEntradas = document.getElementById('totalEntradas');
+    if (elTotalMensalidades) elTotalMensalidades.textContent = formatarMoeda(totalMensalidades);
+    if (elTotalEntradas) elTotalEntradas.textContent = formatarMoeda(totalEntradas);
+};
+
+// Listagem na página inicial (Vendas)
+if (listaCorpo) {
+    onSnapshot(query(collection(db, "vendas"), orderBy("dataCadastro", "desc")), (snap) => {
+        dadosVendas = snap.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
+        renderizarVendas();
+    });
+
+    if (selVendedor) selVendedor.addEventListener('change', renderizarVendas);
+    if (selMes) selMes.addEventListener('change', renderizarVendas);
+    if (selAno) selAno.addEventListener('change', renderizarVendas);
 }
 
 // Função global para excluir vendas
 window.excluirVenda = async (id) => {
     if (confirm("Tem certeza que deseja excluir esta venda?")) {
         try {
-            await deleteDoc(doc(doc(db, "vendas", id)));
+            await deleteDoc(doc(db, "vendas", id));
         } catch (error) {
             console.error("Erro ao excluir venda:", error);
         }

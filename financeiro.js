@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyARsHedCxsS4n3s6WxEopEDXzQPWAjrhp8",
@@ -15,12 +15,16 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// Verifica se o utilizador está autenticado
 onAuthStateChanged(auth, (user) => {
-    if (!user) {
-        window.location.href = "login.html";
-    }
+    if (!user) window.location.href = "login.html";
 });
+
+const btnSair = document.getElementById('btnSair');
+if (btnSair) {
+    btnSair.addEventListener('click', () => {
+        signOut(auth).then(() => window.location.href = "login.html");
+    });
+}
 
 const listaCorpo = document.getElementById('listaFinanceiroCorpo');
 const selVendedor = document.getElementById('filtroVendedorFin');
@@ -29,60 +33,50 @@ const selAno = document.getElementById('filtroAnoFin');
 
 let dadosFinanceiro = [];
 
-// Funções globais para atualizar os campos de pagamento no Firebase
-window.atualizarStatusPago = async (id, status) => {
+window.alternarStatusPagamento = async (id, statusAtual) => {
+    const novoStatus = statusAtual === "Pago" ? "Pendente" : "Pago";
     try {
-        await updateDoc(doc(db, "vendas", id), { pago: status });
+        await updateDoc(doc(db, "vendas", id), {
+            statusFinanceiro: novoStatus
+        });
     } catch (error) {
-        console.error("Erro ao atualizar status de pagamento:", error);
-    }
-};
-
-window.atualizarVezes = async (id, quantidade) => {
-    try {
-        await updateDoc(doc(db, "vendas", id), { vezes: quantidade });
-    } catch (error) {
-        console.error("Erro ao atualizar quantidade de vezes:", error);
+        console.error("Erro ao atualizar status financeiro:", error);
     }
 };
 
 const renderizarFinanceiro = () => {
-    const mesFiltro = selMes.value;
-    const anoFiltro = selAno.value;
-    const vendedorFiltro = selVendedor.value;
+    const vFiltro = selVendedor.value;
+    const mFiltro = selMes.value;
+    const aFiltro = selAno.value;
 
     listaCorpo.innerHTML = "";
 
     dadosFinanceiro.forEach(d => {
-        // Filtros combinados de Mês, Ano e Vendedor
-        const condMes = mesFiltro === "todos" || d.primeiroPagamentoMes === mesFiltro;
-        const condAno = anoFiltro === "todos" || d.primeiroPagamentoAno === anoFiltro;
-        const condVend = vendedorFiltro === "todos" || d.vendedor === vendedorFiltro;
+        const dataObjeto = d.dataCadastro?.seconds ? new Date(d.dataCadastro.seconds * 1000) : null;
+        const anoVenda = dataObjeto ? dataObjeto.getFullYear().toString() : "";
 
-        if (condMes && condAno && condVend) {
-            const isChecked = d.pago ? "checked" : "";
-            const dataF = d.dataCadastro?.seconds ? new Date(d.dataCadastro.seconds * 1000).toLocaleDateString('pt-BR') : "--/--/----";
-            
+        const vBate = vFiltro === "todos" || d.vendedor === vFiltro;
+        const mBate = mFiltro === "todos" || d.primeiroPagamentoMes === mFiltro;
+        const aBate = aFiltro === "todos" || anoVenda === aFiltro;
+
+        if (vBate && mBate && aBate) {
+            const dataVendaF = dataObjeto ? dataObjeto.toLocaleDateString('pt-BR') : "---";
+            const status = d.statusFinanceiro || "Pendente";
+            const classeStatus = status === "Pago" ? "pago" : "pendente";
+
             listaCorpo.innerHTML += `
                 <tr>
-                    <td>${dataF}</td>
-                    <td>${d.vendedor || '---'}</td>
-                    <td><b>${d.cliente || '---'}</b></td>
-                    <td>${d.telefone || '---'}</td>
-                    <td>${d.vigencia || '---'}</td>
-                    <td>${d.dataPgtoInicial || "---"}</td>
-                    <td style="color: var(--accent);">${d.mensalidadePlano || "---"}</td>
-                    <td>${d.pagamentoInicial || "---"}</td>
-                    <td style="text-align: center;">
-                        <input type="checkbox" ${isChecked} onchange="atualizarStatusPago('${d.id}', this.checked)">
-                    </td>
-                    <td>${d.formaPagamento || '---'}</td>
+                    <td style="font-size: 0.8rem; color: #888;">${dataVendaF}</td>
+                    <td>${d.vendedor || '-'}</td>
+                    <td style="font-weight: bold;">${d.cliente || '-'}</td>
+                    <td>${d.telefone || '-'}</td>
+                    <td style="color: var(--accent); font-weight: bold;">${d.valorTotal || d.mensalidadePlano || 'R$ 0,00'}</td>
+                    <td>${d.valorEntrada || d.pagamentoInicial || 'R$ 0,00'}</td>
+                    <td>${d.formaEntrada || d.formaPagamento || '-'}</td>
                     <td>
-                        <select onchange="atualizarVezes('${d.id}', this.value)">
-                            <option value="1" ${d.vezes == "1" ? "selected" : ""}>1x</option>
-                            <option value="2" ${d.vezes == "2" ? "selected" : ""}>2x</option>
-                            <option value="3" ${d.vezes == "3" ? "selected" : ""}>3x</option>
-                        </select>
+                        <button class="badge-status ${classeStatus}" onclick="alternarStatusPagamento('${d.id}', '${status}')">
+                            ${status}
+                        </button>
                     </td>
                 </tr>
             `;
@@ -90,13 +84,11 @@ const renderizarFinanceiro = () => {
     });
 };
 
-// Escuta em tempo real a coleção de vendas
 onSnapshot(query(collection(db, "vendas"), orderBy("dataCadastro", "desc")), (snap) => {
     dadosFinanceiro = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     renderizarFinanceiro();
 });
 
-// Event Listeners dos Filtros
 selVendedor.addEventListener('change', renderizarFinanceiro);
 selMes.addEventListener('change', renderizarFinanceiro);
 selAno.addEventListener('change', renderizarFinanceiro);

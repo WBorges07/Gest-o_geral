@@ -4,9 +4,10 @@
     --card: #1a1a1a;
     --input: #262626;
     --text: #ffffff;
+    --text-secondary: #888888;
     --accent: #00ff88; /* Verde Neon Premium */
     --danger: #ff4d4d;
-    --border: #333;
+    --border: #333333;
     --sidebar-width: 240px;
     --transition: 0.3s ease;
 }
@@ -32,8 +33,13 @@ body {
     background: var(--card);
     border-right: 1px solid var(--border);
     position: fixed;
+    top: 0;
+    left: 0;
     padding: 20px 0;
     z-index: 100;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .sidebar-header {
@@ -69,6 +75,29 @@ body {
     border-left: 4px solid var(--accent);
 }
 
+.sidebar-footer {
+    padding: 20px;
+    border-top: 1px solid var(--border);
+}
+
+.btn-sair {
+    background-color: var(--danger);
+    color: #ffffff;
+    border: none;
+    padding: 12px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+    font-weight: bold;
+    font-size: 0.95rem;
+    transition: var(--transition);
+}
+
+.btn-sair:hover {
+    filter: brightness(1.2);
+    transform: translateY(-2px);
+}
+
 /* --- CONTEÚDO PRINCIPAL --- */
 .main-content {
     margin-left: var(--sidebar-width);
@@ -80,7 +109,7 @@ body {
 
 .container {
     background: var(--card);
-    max-width: 1200px; /* Expande conforme inline style nas páginas */
+    max-width: 1200px;
     width: 100%;
     padding: 30px;
     border-radius: 15px;
@@ -259,6 +288,28 @@ td {
     font-weight: 600;
 }
 
+.badge-status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.badge-status.pago {
+    background: rgba(0, 255, 136, 0.15);
+    color: var(--accent);
+    border: 1px solid var(--accent);
+}
+
+.badge-status.pendente {
+    background: rgba(255, 77, 77, 0.15);
+    color: var(--danger);
+    border: 1px solid var(--danger);
+}
+
 input[type="checkbox"] {
     accent-color: var(--accent);
     width: 18px;
@@ -280,31 +331,6 @@ td textarea[readonly] {
     margin: 40px 0;
 }
 
-/* --- RESPONSIVIDADE --- */
-@media (max-width: 1024px) {
-    .main-content {
-        padding: 20px;
-    }
-}
-
-@media (max-width: 768px) {
-    .sidebar {
-        display: none; /* Em telas pequenas, você pode implementar um menu hamburguer futuro */
-    }
-    
-    .main-content {
-        margin-left: 0;
-        width: 100%;
-    }
-    
-    .dashboard, .filter-container {
-        flex-direction: column;
-    }
-    
-    .card-total {
-        width: 100%;
-    }
-}
 /* --- LOGIN PAGE STYLES --- */
 .login-page {
     display: flex;
@@ -326,12 +352,18 @@ td textarea[readonly] {
     margin-bottom: 40px;
 }
 
+.login-logo img {
+    max-width: 100%;
+    height: auto;
+}
+
 .login-logo h1 {
     font-size: 2.5rem;
     font-weight: 800;
     letter-spacing: -2px;
     background: linear-gradient(45deg, var(--accent), #00d4ff);
     -webkit-background-clip: text;
+    background-clip: text;
     -webkit-text-fill-color: transparent;
     margin-bottom: 5px;
 }
@@ -347,4 +379,30 @@ td textarea[readonly] {
 @keyframes fadeIn {
     from { opacity: 0; transform: translateY(20px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+/* --- RESPONSIVIDADE --- */
+@media (max-width: 1024px) {
+    .main-content {
+        padding: 20px;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        display: none;
+    }
+    
+    .main-content {
+        margin-left: 0;
+        width: 100%;
+    }
+    
+    .dashboard, .filter-container {
+        flex-direction: column;
+    }
+    
+    .card-total {
+        width: 100%;
+    }
 }

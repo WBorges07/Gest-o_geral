@@ -10,15 +10,20 @@
 <body class="dark-mode">
 
 <nav class="sidebar">
-    <div class="sidebar-header">
-        <h3>Menu</h3>
+    <div>
+        <div class="sidebar-header">
+            <h3>Menu</h3>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#" class="active">Vendas</a></li>
+            <li><a href="financeiro.html">Financeiro</a></li>
+            <li><a href="cs.html">CS</a></li>
+            <li><a href="trafego.html">Gestão de Tráfego</a></li>
+        </ul>
     </div>
-    <ul class="nav-links">
-        <li><a href="#" class="active">Vendas</a></li>
-        <li><a href="financeiro.html">Financeiro</a></li>
-        <li><a href="cs.html">CS</a></li>
-        <li><a href="trafego.html">Gestão de Tráfego</a></li>
-    </ul>
+    <div class="sidebar-footer">
+        <button id="btnSair" class="btn-sair" style="background-color: var(--danger, #e74c3c); color: #ffffff; border: none; padding: 10px 15px; border-radius: 6px; cursor: pointer; width: 100%; font-weight: bold; transition: background 0.3s;">Sair</button>
+    </div>
 </nav>
 
 <main class="main-content">

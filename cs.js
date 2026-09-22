@@ -1,6 +1,6 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyARsHedCxsS4n3s6WxEopEDXzQPWAjrhp8",
@@ -21,6 +21,18 @@ onAuthStateChanged(auth, (user) => {
         window.location.href = "login.html";
     }
 });
+
+// Ação de Logout
+const btnSair = document.getElementById('btnSair');
+if (btnSair) {
+    btnSair.addEventListener('click', () => {
+        signOut(auth).then(() => {
+            window.location.href = "login.html";
+        }).catch((error) => {
+            console.error("Erro ao fazer logout:", error);
+        });
+    });
+}
 
 const listaCorpo = document.getElementById('listaCSCorpo');
 const selVendedor = document.getElementById('filtroVendedorCS');
