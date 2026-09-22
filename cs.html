@@ -8,10 +8,10 @@
     <script src="https://unpkg.com/imask"></script>
     <style>
         .select-material {
-            padding: 6px 10px;
+            padding: 5px 8px;
             border-radius: 6px;
             font-weight: 600;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             border: 1px solid var(--border);
             outline: none;
             cursor: pointer;
@@ -32,21 +32,20 @@
             color: var(--accent);
             border-color: var(--accent);
         }
-        /* Ajuste de largura e usabilidade para áreas de texto */
         .input-textarea-cs {
             width: 100%;
-            min-width: 180px;
-            min-height: 55px;
-            padding: 6px 8px;
+            min-width: 150px;
+            max-width: 250px;
+            min-height: 42px;
+            padding: 5px 8px;
             border-radius: 6px;
             border: 1px solid var(--border);
             background: var(--input);
             color: var(--text);
-            font-size: 0.85rem;
+            font-size: 0.88rem;
             resize: vertical;
             box-sizing: border-box;
         }
-        /* Estilização do Botão Sair no Menu */
         .btn-logout {
             margin-top: auto;
             background: rgba(255, 68, 68, 0.15);
@@ -78,6 +77,8 @@
             <li><a href="financeiro.html">Financeiro</a></li>
             <li><a href="#" class="active">CS</a></li>
             <li><a href="trafego.html">Gestão de Tráfego</a></li>
+            <li><a href="midias.html">Mídias</a></li>
+            <li><a href="bi.html">B.I</a></li>
         </ul>
     </div>
     <div style="padding: 15px;">
@@ -86,7 +87,7 @@
 </nav>
 
 <main class="main-content">
-    <div class="container" style="max-width: 1500px;">
+    <div class="container">
         <h2>🤝 Customer Success (CS)</h2>
         
         <div class="filter-container">
@@ -132,9 +133,12 @@
                         <th>On. Aconteceu?</th>
                         <th>Squad</th>
                         <th>Área de Atuação</th>
+                        <th>Site/Landing Page</th>
+                        <th>Plataforma de Início</th>
+                        <th>Região para Anunciar</th>
                         <th>Material</th>
-                        <th style="min-width: 190px;">Teses</th>
-                        <th style="min-width: 190px;">Observações</th>
+                        <th style="min-width: 160px;">Teses</th>
+                        <th style="min-width: 160px;">Observações</th>
                     </tr>
                 </thead>
                 <tbody id="listaCSCorpo"></tbody>

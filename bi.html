@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM Pro - Business Intelligence</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .bi-grid-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        .bi-card {
+            background: var(--input);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        .bi-card span {
+            color: #aaa;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        .bi-card h3 {
+            color: var(--accent);
+            font-size: 2rem;
+            margin-top: 10px;
+        }
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        .chart-box {
+            background: var(--input);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 20px;
+        }
+        .chart-box h4 {
+            color: var(--text);
+            margin-bottom: 15px;
+            text-align: center;
+            font-size: 1.1rem;
+        }
+        .btn-logout {
+            margin-top: auto;
+            background: rgba(255, 68, 68, 0.15);
+            color: #ff4444;
+            border: 1px solid #ff4444;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            text-align: center;
+            transition: var(--transition);
+        }
+        .btn-logout:hover {
+            background: #ff4444;
+            color: #fff;
+        }
+    </style>
+</head>
+<body class="dark-mode">
+
+<nav class="sidebar" style="display: flex; flex-direction: column; justify-content: space-between; height: 100vh;">
+    <div>
+        <div class="sidebar-header">
+            <h3>Menu</h3>
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html">Vendas</a></li>
+            <li><a href="financeiro.html">Financeiro</a></li>
+            <li><a href="cs.html">CS</a></li>
+            <li><a href="trafego.html">Gestão de Tráfego</a></li>
+            <li><a href="midias.html">Mídias</a></li>
+            <li><a href="#" class="active">B.I</a></li>
+        </ul>
+    </div>
+    <div style="padding: 15px;">
+        <button id="btnSair" class="btn-logout">🚪 Sair</button>
+    </div>
+</nav>
+
+<main class="main-content">
+    <div class="container" style="max-width: 1400px;">
+        <h2>📊 Business Intelligence & Indicadores</h2>
+
+        <!-- CARDS DE RESUMO EM NÚMEROS -->
+        <div class="bi-grid-cards">
+            <div class="bi-card">
+                <span>Total de Planos Fechados</span>
+                <h3 id="totalPlanosNum">0</h3>
+            </div>
+            <div class="bi-card">
+                <span>Plano Mais Vendido</span>
+                <h3 id="planoMaisVendido" style="font-size: 1.2rem;">-</h3>
+            </div>
+            <div class="bi-card">
+                <span>Vendedor Destaque</span>
+                <h3 id="vendedorDestaque" style="font-size: 1.2rem;">-</h3>
+            </div>
+            <div class="bi-card">
+                <span>Satisfação Geral</span>
+                <h3 id="satisfacaoGeral">-</h3>
+            </div>
+        </div>
+
+        <!-- GRÁFICOS -->
+        <div class="charts-container">
+            <div class="chart-box">
+                <h4>📦 Quantidade de Planos Fechados</h4>
+                <canvas id="chartPlanos"></canvas>
+            </div>
+            <div class="chart-box">
+                <h4>📈 Performance de Vendas por Mês</h4>
+                <canvas id="chartVendasMes"></canvas>
+            </div>
+            <div class="chart-box">
+                <h4>👤 Vendas por Vendedor</h4>
+                <canvas id="chartVendedores"></canvas>
+            </div>
+            <div class="chart-box">
+                <h4>⭐ Grau de Satisfação por Squad</h4>
+                <canvas id="chartSatisfacaoSquad"></canvas>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script type="module" src="bi.js"></script>
+</body>
+</html>

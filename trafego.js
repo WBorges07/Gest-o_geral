@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
@@ -15,228 +15,240 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// Verifica se o usuário está logado
 onAuthStateChanged(auth, (user) => {
     if (!user) {
         window.location.href = "login.html";
     }
 });
 
-// Ação de Logout
 const btnSair = document.getElementById('btnSair');
 if (btnSair) {
     btnSair.addEventListener('click', () => {
         signOut(auth).then(() => {
             window.location.href = "login.html";
-        }).catch((error) => {
-            console.error("Erro ao fazer logout:", error);
-        });
+        }).catch((error) => console.error("Erro ao fazer logout:", error));
     });
 }
 
-const listaCorpo = document.getElementById('listaTrafegoCorpo');
-const selVendedor = document.getElementById('filtroVendedorTrafego');
-const selMes = document.getElementById('filtroMesTrafego');
-const selAno = document.getElementById('filtroAnoTrafego');
+const listaTrafegoCorpo = document.getElementById('listaTrafegoCorpo');
 const tabBtns = document.querySelectorAll('.tab-btn');
 
-let dadosTrafego = [];
-let squadFiltroAtivo = "todos";
+let vendasTrafegoCache = [];
+let squadFiltro = "todos";
 
-// Alternar entre as abas de Squad
 tabBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
         tabBtns.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        squadFiltroAtivo = btn.getAttribute('data-squad');
-        renderizarTrafego();
+        e.target.classList.add('active');
+        squadFiltro = e.target.getAttribute('data-squad');
+        renderizarTabelaTrafego();
     });
 });
 
-window.atualizarCampoTrafego = async (id, campo, valor) => {
-    try {
-        await updateDoc(doc(db, "vendas", id), { [campo]: valor });
-    } catch (error) {
-        console.error("Erro ao atualizar gestão de tráfego:", error);
-    }
+const aplicarClasseStatus = (selectEl, valor) => {
+    selectEl.classList.remove('subindo', 'ativo', 'pausado');
+    if (valor === "Subindo Campanha") selectEl.classList.add('subindo');
+    if (valor === "Ativo") selectEl.classList.add('ativo');
+    if (valor === "Pausado") selectEl.classList.add('pausado');
 };
 
-// Formatação dinâmica para moeda Real (R$)
-window.formatarEAtualizarMoeda = (input, id, campo) => {
-    let valor = input.value.replace(/\D/g, "");
-    if (!valor) {
-        input.value = "";
-        atualizarCampoTrafego(id, campo, "");
-        return;
-    }
-    valor = (parseFloat(valor) / 100).toLocaleString('pt-BR', {
-        style: 'currency',
-        currency: 'BRL'
+const aplicarClasseTendencia = (selectEl, valor) => {
+    selectEl.classList.remove('subir', 'manter', 'descer');
+    if (valor === "Subir") selectEl.classList.add('subir');
+    if (valor === "Manter") selectEl.classList.add('manter');
+    if (valor === "Descer") selectEl.classList.add('descer');
+};
+
+const aplicarClasseSatisfacao = (selectEl, valor) => {
+    selectEl.classList.remove('satisfeito', 'alerta', 'insatisfeito');
+    if (valor === "Satisfeito") selectEl.classList.add('satisfeito');
+    if (valor === "Alerta") selectEl.classList.add('alerta');
+    if (valor === "Insatisfeito") selectEl.classList.add('insatisfeito');
+};
+
+const renderizarTabelaTrafego = () => {
+    listaTrafegoCorpo.innerHTML = "";
+
+    // Filtra apenas clientes onde Onboarding aconteceu = "Sim"
+    const filtrados = vendasTrafegoCache.filter(venda => {
+        const matchOnboarding = venda.onboardingAconteceu === "Sim";
+        const matchSquad = squadFiltro === "todos" || venda.squad === squadFiltro;
+        return matchOnboarding && matchSquad;
     });
-    input.value = valor;
-    atualizarCampoTrafego(id, campo, valor);
-};
 
-// Atualizar cores do campo Campanha
-window.atualizarCorCampanha = (selectElement, id) => {
-    const valor = selectElement.value;
-    selectElement.className = "select-status";
-    
-    if (valor === "Rodando") {
-        selectElement.classList.add("rodando");
-    } else if (valor === "Pausada") {
-        selectElement.classList.add("pausada");
-    } else if (valor === "Encerrada") {
-        selectElement.classList.add("encerrada");
-    }
+    filtrados.forEach(venda => {
+        const tr = document.createElement('tr');
 
-    atualizarCampoTrafego(id, 'statusCampanha', valor);
-};
+        const telefoneCliente = venda.telefoneCliente || venda.telefone || "-";
+        const gestorTrafego = venda.gestorTrafego || "";
+        const statusCampanha = venda.statusCampanha || "Subindo Campanha";
+        const cplTrafego = venda.cplTrafego || "";
+        const tendenciaTrafego = venda.tendenciaTrafego || "Manter";
+        const orcamentoTrafego = venda.orcamentoTrafego || "";
+        const saldoRestanteTrafego = venda.saldoRestanteTrafego || "";
+        const satisfacao = venda.satisfacao || "Satisfeito";
+        const estrategiaTrafego = venda.estrategiaTrafego || "";
+        const observacoesTrafego = venda.observacoesTrafego || "";
 
-// Atualizar cores do campo Satisfação
-window.atualizarCorSatisfacao = (selectElement, id) => {
-    const valor = selectElement.value;
-    selectElement.className = "select-status";
-    
-    if (valor === "Satisfeito") {
-        selectElement.classList.add("satisfeito");
-    } else if (valor === "Alerta") {
-        selectElement.classList.add("alerta");
-    } else if (valor === "Insatisfeito") {
-        selectElement.classList.add("insatisfeito");
-    }
+        tr.innerHTML = `
+            <td style="font-weight: bold;">${venda.nomeCliente || '-'}</td>
+            <td>${telefoneCliente}</td>
+            <td><span style="background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border);">${venda.squad || 'Não atribuído'}</span></td>
+            <td>
+                <input type="text" class="input-gestor" data-id="${venda.id}" value="${gestorTrafego}" placeholder="Nome do Gestor..." style="width: 100%; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+            </td>
+            <td style="color: var(--accent); font-weight: bold;">${venda.investimento || 'R$ 0,00'}</td>
+            <td>${venda.plataformaInicio || '-'}</td>
+            <td>
+                <select class="select-status-trafego" data-id="${venda.id}">
+                    <option value="Subindo Campanha" ${statusCampanha === "Subindo Campanha" ? "selected" : ""}>Subindo Campanha</option>
+                    <option value="Ativo" ${statusCampanha === "Ativo" ? "selected" : ""}>Ativo</option>
+                    <option value="Pausado" ${statusCampanha === "Pausado" ? "selected" : ""}>Pausado</option>
+                </select>
+            </td>
+            <td>
+                <input type="text" class="input-moeda-trafego input-cpl" data-id="${venda.id}" value="${cplTrafego}" placeholder="R$ 0,00">
+            </td>
+            <td>
+                <select class="select-tendencia" data-id="${venda.id}">
+                    <option value="Subir" ${tendenciaTrafego === "Subir" ? "selected" : ""}>⬆️ Subir</option>
+                    <option value="Manter" ${tendenciaTrafego === "Manter" ? "selected" : ""}>➡ Manter</option>
+                    <option value="Descer" ${tendenciaTrafego === "Descer" ? "selected" : ""}>⬇️ Descer</option>
+                </select>
+            </td>
+            <td>
+                <input type="text" class="input-moeda-trafego input-orcamento" data-id="${venda.id}" value="${orcamentoTrafego}" placeholder="R$ 0,00">
+            </td>
+            <td>
+                <input type="text" class="input-moeda-trafego input-saldo" data-id="${venda.id}" value="${saldoRestanteTrafego}" placeholder="R$ 0,00">
+            </td>
+            <td>
+                <select class="select-satisfacao" data-id="${venda.id}">
+                    <option value="Satisfeito" ${satisfacao === "Satisfeito" ? "selected" : ""}>Satisfeito</option>
+                    <option value="Alerta" ${satisfacao === "Alerta" ? "selected" : ""}>Alerta</option>
+                    <option value="Insatisfeito" ${satisfacao === "Insatisfeito" ? "selected" : ""}>Insatisfeito</option>
+                </select>
+            </td>
+            <td>
+                <textarea class="input-textarea-trafego input-estrategia" data-id="${venda.id}" placeholder="Digitar estratégia...">${estrategiaTrafego}</textarea>
+            </td>
+            <td>
+                <textarea class="input-textarea-trafego input-obs-trafego" data-id="${venda.id}" placeholder="Digitar observações...">${observacoesTrafego}</textarea>
+            </td>
+        `;
 
-    atualizarCampoTrafego(id, 'statusSatisfacao', valor);
-};
+        listaTrafegoCorpo.appendChild(tr);
+    });
 
-// Atualizar cores do campo Tendência
-window.atualizarCorTendencia = (selectElement, id) => {
-    const valor = selectElement.value;
-    selectElement.className = "select-status";
-    
-    if (valor === "Subir") {
-        selectElement.classList.add("subir");
-    } else if (valor === "Manter") {
-        selectElement.classList.add("manter");
-    } else if (valor === "Descer") {
-        selectElement.classList.add("descer");
-    }
-
-    atualizarCampoTrafego(id, 'statusTendencia', valor);
-};
-
-const renderizarTrafego = () => {
-    const vFiltro = selVendedor.value;
-    const mFiltro = selMes.value;
-    const aFiltro = selAno.value;
-    
-    listaCorpo.innerHTML = "";
-
-    dadosTrafego.forEach(d => {
-        // Exibe apenas se o Onboarding foi ticado na página CS
-        if (d.onboardingAconteceu === true) {
-            
-            const dataObjeto = d.dataCadastro?.seconds ? new Date(d.dataCadastro.seconds * 1000) : null;
-            const anoVenda = dataObjeto ? dataObjeto.getFullYear().toString() : "";
-
-            const vBate = vFiltro === "todos" || d.vendedor === vFiltro;
-            const mBate = mFiltro === "todos" || d.primeiroPagamentoMes === mFiltro;
-            const aBate = aFiltro === "todos" || anoVenda === aFiltro;
-            const squadBate = squadFiltroAtivo === "todos" || d.squad === squadFiltroAtivo;
-
-            if (vBate && mBate && aBate && squadBate) {
-                const dataVendaF = dataObjeto ? dataObjeto.toLocaleDateString('pt-BR') : "---";
-                const socialOpcaoSim = d.socialMidia === "Sim" ? "selected" : "";
-                const socialOpcaoNao = d.socialMidia === "Não" ? "selected" : "";
-
-                const campanhaAtual = d.statusCampanha || "";
-                let classeCampanha = "";
-                if (campanhaAtual === "Rodando") classeCampanha = "rodando";
-                else if (campanhaAtual === "Pausada") classeCampanha = "pausada";
-                else if (campanhaAtual === "Encerrada") classeCampanha = "encerrada";
-
-                const satisfacaoAtual = d.statusSatisfacao || "";
-                let classeSatisfacao = "";
-                if (satisfacaoAtual === "Satisfeito") classeSatisfacao = "satisfeito";
-                else if (satisfacaoAtual === "Alerta") classeSatisfacao = "alerta";
-                else if (satisfacaoAtual === "Insatisfeito") classeSatisfacao = "insatisfeito";
-
-                const tendenciaAtual = d.statusTendencia || "";
-                let classeTendencia = "";
-                if (tendenciaAtual === "Subir") classeTendencia = "subir";
-                else if (tendenciaAtual === "Manter") classeTendencia = "manter";
-                else if (tendenciaAtual === "Descer") classeTendencia = "descer";
-
-                listaCorpo.innerHTML += `
-                    <tr>
-                        <td style="font-size: 0.8rem; color: #888;">${dataVendaF}</td>
-                        <td>${d.vendedor}</td>
-                        <td style="font-weight: bold;">${d.cliente}</td>
-                        <td>${d.telefone}</td>
-                        <td>
-                            <select class="select-status ${classeCampanha}" onchange="atualizarCorCampanha(this, '${d.id}')">
-                                <option value="">Selecione...</option>
-                                <option value="Rodando" ${campanhaAtual === "Rodando" ? "selected" : ""}>Rodando</option>
-                                <option value="Pausada" ${campanhaAtual === "Pausada" ? "selected" : ""}>Pausada</option>
-                                <option value="Encerrada" ${campanhaAtual === "Encerrada" ? "selected" : ""}>Encerrada</option>
-                            </select>
-                        </td>
-                        <td>
-                            <select class="select-status ${classeSatisfacao}" onchange="atualizarCorSatisfacao(this, '${d.id}')">
-                                <option value="">Selecione...</option>
-                                <option value="Satisfeito" ${satisfacaoAtual === "Satisfeito" ? "selected" : ""}>Satisfeito</option>
-                                <option value="Alerta" ${satisfacaoAtual === "Alerta" ? "selected" : ""}>Alerta</option>
-                                <option value="Insatisfeito" ${satisfacaoAtual === "Insatisfeito" ? "selected" : ""}>Insatisfeito</option>
-                            </select>
-                        </td>
-                        <td>
-                            <input type="text" class="input-real-trafego" value="${d.cpl || ''}" 
-                                placeholder="R$ 0,00" onblur="formatarEAtualizarMoeda(this, '${d.id}', 'cpl')">
-                        </td>
-                        <td>
-                            <select class="select-status ${classeTendencia}" onchange="atualizarCorTendencia(this, '${d.id}')">
-                                <option value="">Selecione...</option>
-                                <option value="Subir" ${tendenciaAtual === "Subir" ? "selected" : ""}>⬆ Subir</option>
-                                <option value="Manter" ${tendenciaAtual === "Manter" ? "selected" : ""}>➡ Manter</option>
-                                <option value="Descer" ${tendenciaAtual === "Descer" ? "selected" : ""}>⬇ Descer</option>
-                            </select>
-                        </td>
-                        <td>
-                            <input type="text" class="input-real-trafego" value="${d.orcamento || ''}" 
-                                placeholder="R$ 0,00" onblur="formatarEAtualizarMoeda(this, '${d.id}', 'orcamento')">
-                        </td>
-                        <td>
-                            <input type="text" class="input-real-trafego" value="${d.saldoRestante || ''}" 
-                                placeholder="R$ 0,00" onblur="formatarEAtualizarMoeda(this, '${d.id}', 'saldoRestante')">
-                        </td>
-                        <td><span class="badge-area">${d.areaAtuacao || "Não Inf."}</span></td>
-                        <td>
-                            <textarea class="input-textarea-trafego" onblur="atualizarCampoTrafego('${d.id}', 'teses', this.value)" 
-                                placeholder="Estratégia...">${d.teses || ""}</textarea>
-                        </td>
-                        <td>
-                            <textarea class="input-textarea-trafego" onblur="atualizarCampoTrafego('${d.id}', 'observacoes', this.value)" 
-                                placeholder="Notas...">${d.observacoes || ""}</textarea>
-                        </td>
-                        <td>
-                            <select onchange="atualizarCampoTrafego('${d.id}', 'socialMidia', this.value)" style="padding: 5px;">
-                                <option value="">Escolha...</option>
-                                <option value="Sim" ${socialOpcaoSim}>Sim</option>
-                                <option value="Não" ${socialOpcaoNao}>Não</option>
-                            </select>
-                        </td>
-                    </tr>
-                `;
+    // Eventos e Máscaras de Moeda
+    const maskMoedaOptions = {
+        mask: 'R$ num',
+        blocks: {
+            num: {
+                mask: Number,
+                thousandsSeparator: '.',
+                radix: ',',
+                mapToRadix: ['.']
             }
         }
+    };
+
+    // Máscara CPL
+    document.querySelectorAll('.input-cpl').forEach(input => {
+        if (window.IMask) IMask(input, maskMoedaOptions);
+        input.addEventListener('change', async (e) => {
+            const id = e.target.getAttribute('data-id');
+            const val = e.target.value;
+            await updateDoc(doc(db, "vendas", id), { cplTrafego: val });
+        });
+    });
+
+    // Máscara Orçamento
+    document.querySelectorAll('.input-orcamento').forEach(input => {
+        if (window.IMask) IMask(input, maskMoedaOptions);
+        input.addEventListener('change', async (e) => {
+            const id = e.target.getAttribute('data-id');
+            const val = e.target.value;
+            await updateDoc(doc(db, "vendas", id), { orcamentoTrafego: val });
+        });
+    });
+
+    // Máscara Saldo Restante
+    document.querySelectorAll('.input-saldo').forEach(input => {
+        if (window.IMask) IMask(input, maskMoedaOptions);
+        input.addEventListener('change', async (e) => {
+            const id = e.target.getAttribute('data-id');
+            const val = e.target.value;
+            await updateDoc(doc(db, "vendas", id), { saldoRestanteTrafego: val });
+        });
+    });
+
+    // Gestor
+    document.querySelectorAll('.input-gestor').forEach(input => {
+        input.addEventListener('change', async (e) => {
+            const id = e.target.getAttribute('data-id');
+            const val = e.target.value;
+            await updateDoc(doc(db, "vendas", id), { gestorTrafego: val });
+        });
+    });
+
+    // Status da Campanha
+    document.querySelectorAll('.select-status-trafego').forEach(select => {
+        aplicarClasseStatus(select, select.value);
+        select.addEventListener('change', async (e) => {
+            const id = e.target.getAttribute('data-id');
+            const val = e.target.value;
+            aplicarClasseStatus(e.target, val);
+            await updateDoc(doc(db, "vendas", id), { statusCampanha: val });
+        });
+    });
+
+    // Tendência
+    document.querySelectorAll('.select-tendencia').forEach(select => {
+        aplicarClasseTendencia(select, select.value);
+        select.addEventListener('change', async (e) => {
+            const id = e.target.getAttribute('data-id');
+            const val = e.target.value;
+            aplicarClasseTendencia(e.target, val);
+            await updateDoc(doc(db, "vendas", id), { tendenciaTrafego: val });
+        });
+    });
+
+    // Satisfação
+    document.querySelectorAll('.select-satisfacao').forEach(select => {
+        aplicarClasseSatisfacao(select, select.value);
+        select.addEventListener('change', async (e) => {
+            const id = e.target.getAttribute('data-id');
+            const val = e.target.value;
+            aplicarClasseSatisfacao(e.target, val);
+            await updateDoc(doc(db, "vendas", id), { satisfacao: val });
+        });
+    });
+
+    // Estratégia
+    document.querySelectorAll('.input-estrategia').forEach(textarea => {
+        textarea.addEventListener('change', async (e) => {
+            const id = e.target.getAttribute('data-id');
+            const val = e.target.value;
+            await updateDoc(doc(db, "vendas", id), { estrategiaTrafego: val });
+        });
+    });
+
+    // Observações
+    document.querySelectorAll('.input-obs-trafego').forEach(textarea => {
+        textarea.addEventListener('change', async (e) => {
+            const id = e.target.getAttribute('data-id');
+            const val = e.target.value;
+            await updateDoc(doc(db, "vendas", id), { observacoesTrafego: val });
+        });
     });
 };
 
-onSnapshot(query(collection(db, "vendas"), orderBy("dataCadastro", "desc")), (snap) => {
-    dadosTrafego = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    renderizarTrafego();
+const q = query(collection(db, "vendas"), orderBy("dataCadastro", "desc"));
+onSnapshot(q, (snapshot) => {
+    vendasTrafegoCache = [];
+    snapshot.forEach((doc) => {
+        vendasTrafegoCache.push({ id: doc.id, ...doc.data() });
+    });
+    renderizarTabelaTrafego();
 });
-
-selVendedor.addEventListener('change', renderizarTrafego);
-selMes.addEventListener('change', renderizarTrafego);
-selAno.addEventListener('change', renderizarTrafego);

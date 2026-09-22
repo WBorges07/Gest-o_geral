@@ -52,27 +52,40 @@ const renderizarFinanceiro = () => {
     listaCorpo.innerHTML = "";
 
     dadosFinanceiro.forEach(d => {
-        const dataObjeto = d.dataCadastro?.seconds ? new Date(d.dataCadastro.seconds * 1000) : null;
-        const anoVenda = dataObjeto ? dataObjeto.getFullYear().toString() : "";
+        // Leitura unificada de campos cadastrados na aba Vendas
+        const dataExibicao = d.dataPgtoInicial || (d.dataCadastro?.seconds ? new Date(d.dataCadastro.seconds * 1000).toLocaleDateString('pt-BR') : "---");
+        
+        let anoVenda = "";
+        if (d.dataPgtoInicial && d.dataPgtoInicial.includes('/')) {
+            const partes = d.dataPgtoInicial.split('/');
+            if (partes.length === 3) anoVenda = partes[2];
+        } else if (d.dataCadastro?.seconds) {
+            anoVenda = new Date(d.dataCadastro.seconds * 1000).getFullYear().toString();
+        }
+
+        const mesReferencia = d.pagamentoMes || d.primeiroPagamentoMes || "";
+        const clienteNome = d.nomeCliente || d.cliente || "-";
+        const valorMensal = d.mensalidadePlano || d.valorTotal || "R$ 0,00";
+        const valorEntrada = d.pagamentoInicial || d.valorEntrada || "R$ 0,00";
+        const formaPgto = d.formaPagamento || d.formaEntrada || "-";
 
         const vBate = vFiltro === "todos" || d.vendedor === vFiltro;
-        const mBate = mFiltro === "todos" || d.primeiroPagamentoMes === mFiltro;
+        const mBate = mFiltro === "todos" || mesReferencia === mFiltro;
         const aBate = aFiltro === "todos" || anoVenda === aFiltro;
 
         if (vBate && mBate && aBate) {
-            const dataVendaF = dataObjeto ? dataObjeto.toLocaleDateString('pt-BR') : "---";
             const status = d.statusFinanceiro || "Pendente";
             const classeStatus = status === "Pago" ? "pago" : "pendente";
 
             listaCorpo.innerHTML += `
                 <tr>
-                    <td style="font-size: 0.8rem; color: #888;">${dataVendaF}</td>
+                    <td style="font-size: 0.8rem; color: #888;">${dataExibicao}</td>
                     <td>${d.vendedor || '-'}</td>
-                    <td style="font-weight: bold;">${d.cliente || '-'}</td>
+                    <td style="font-weight: bold;">${clienteNome}</td>
                     <td>${d.telefone || '-'}</td>
-                    <td style="color: var(--accent); font-weight: bold;">${d.valorTotal || d.mensalidadePlano || 'R$ 0,00'}</td>
-                    <td>${d.valorEntrada || d.pagamentoInicial || 'R$ 0,00'}</td>
-                    <td>${d.formaEntrada || d.formaPagamento || '-'}</td>
+                    <td style="color: var(--accent); font-weight: bold;">${valorMensal}</td>
+                    <td>${valorEntrada}</td>
+                    <td>${formaPgto}</td>
                     <td>
                         <button class="badge-status ${classeStatus}" onclick="alternarStatusPagamento('${d.id}', '${status}')">
                             ${status}

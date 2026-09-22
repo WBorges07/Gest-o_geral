@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, doc, deleteDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
@@ -15,168 +15,180 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 
-// Verifica o estado de autenticação
 onAuthStateChanged(auth, (user) => {
-    if (!user) window.location.href = "login.html";
+    if (!user) {
+        window.location.href = "login.html";
+    }
 });
 
-// Listener para o botão Sair
 const btnSair = document.getElementById('btnSair');
 if (btnSair) {
     btnSair.addEventListener('click', () => {
         signOut(auth).then(() => {
             window.location.href = "login.html";
-        }).catch((error) => {
-            console.error("Erro ao fazer logout:", error);
-        });
+        }).catch((error) => console.error("Erro ao fazer logout:", error));
     });
 }
 
+// Máscaras de entrada
+if (window.IMask) {
+    const telInput = document.getElementById('telefone');
+    if (telInput) {
+        IMask(telInput, { mask: '(00) 00000-0000' });
+    }
+
+    const dataInput = document.getElementById('dataPgtoInicial');
+    if (dataInput) {
+        IMask(dataInput, { mask: '00/00/0000' });
+    }
+
+    const maskMoedaOptions = {
+        mask: 'R$ num',
+        blocks: {
+            num: {
+                mask: Number,
+                thousandsSeparator: '.',
+                radix: ',',
+                mapToRadix: ['.']
+            }
+        }
+    };
+
+    const invInput = document.getElementById('investimento');
+    if (invInput) IMask(invInput, maskMoedaOptions);
+
+    const mensInput = document.getElementById('mensalidadePlano');
+    if (mensInput) IMask(mensInput, maskMoedaOptions);
+
+    const pagInput = document.getElementById('pagamentoInicial');
+    if (pagInput) IMask(pagInput, maskMoedaOptions);
+}
+
 const vendaForm = document.getElementById('vendaForm');
-const selVendedor = document.getElementById('filtroVendedor');
-const selMes = document.getElementById('filtroMes');
-const selAno = document.getElementById('filtroAno');
-const listaCorpo = document.getElementById('listaVendasCorpo');
+const listaVendasCorpo = document.getElementById('listaVendasCorpo');
+const filtroVendedor = document.getElementById('filtroVendedor');
+const filtroMes = document.getElementById('filtroMes');
+const filtroAno = document.getElementById('filtroAno');
 
-let dadosVendas = [];
+let vendasCache = [];
 
-// Função auxiliar para converter moeda (R$) para valor numérico
-const parseMoeda = (str) => {
-    if (!str) return 0;
-    const num = str.replace(/[^\d,-]/g, '').replace(',', '.');
-    return parseFloat(num) || 0;
+vendaForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const novaVenda = {
+        vendedor: document.getElementById('vendedor').value,
+        nomeCliente: document.getElementById('nomeCliente').value,
+        telefone: document.getElementById('telefone').value,
+        plano: document.getElementById('plano').value,
+        vigencia: document.getElementById('vigencia').value,
+        area: document.getElementById('area').value,
+        perfil: document.getElementById('perfil').value,
+        pagamentoMes: document.getElementById('pagamentoMes').value,
+        tipoCampanha: document.getElementById('tipoCampanha').value,
+        investimento: document.getElementById('investimento').value,
+        mensalidadePlano: document.getElementById('mensalidadePlano').value,
+        pagamentoInicial: document.getElementById('pagamentoInicial').value,
+        dataPgtoInicial: document.getElementById('dataPgtoInicial').value,
+        formaPagamento: document.getElementById('formaPagamento').value,
+        instagram: document.getElementById('instagram').value,
+        jaInvestia: document.getElementById('jaInvestia').value,
+        siteLandingPage: document.getElementById('siteLandingPage').value,
+        plataformaInicio: document.getElementById('plataformaInicio').value,
+        regiaoAnunciar: document.getElementById('regiaoAnunciar').value,
+        dataCadastro: new Date().toISOString()
+    };
+
+    try {
+        await addDoc(collection(db, "vendas"), novaVenda);
+        alert("Venda salva com sucesso!");
+        vendaForm.reset();
+    } catch (error) {
+        console.error("Erro ao salvar venda: ", error);
+        alert("Erro ao salvar a venda.");
+    }
+});
+
+const parseMoeda = (val) => {
+    if (!val) return 0;
+    const limpo = val.replace("R$", "").replace(/\./g, "").replace(",", ".").trim();
+    return parseFloat(limpo) || 0;
 };
 
-// Função auxiliar para formatar números para formato BRL (R$)
 const formatarMoeda = (val) => {
     return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 };
 
-if (vendaForm) {
-    vendaForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
+const renderizarTabela = () => {
+    const selVendedor = filtroVendedor.value;
+    const selMes = filtroMes.value;
+    const selAno = filtroAno.value;
 
-        const campoAno = document.getElementById('filtroAno');
-        const anoParaSalvar = (campoAno && campoAno.value !== "todos") ? campoAno.value : "2026";
+    listaVendasCorpo.innerHTML = "";
 
-        const mensalidade = document.getElementById('mensalidadePlano').value;
-        const entrada = document.getElementById('pagamentoInicial').value;
-        const formaPgto = document.getElementById('formaPagamento').value;
+    let totalMens = 0;
+    let totalEnt = 0;
 
-        const novaVenda = {
-            // Campos de identificação e contato
-            vendedor: document.getElementById('vendedor').value,
-            cliente: document.getElementById('nomeCliente').value,
-            telefone: document.getElementById('telefone').value,
-            
-            // Campos do Plano
-            plano: document.getElementById('plano').value,
-            vigencia: document.getElementById('vigencia').value,
-            mensalidadePlano: mensalidade,
-            
-            // Campos Financeiros
-            valorTotal: mensalidade,
-            valorEntrada: entrada,
-            formaEntrada: formaPgto,
-            pagamentoInicial: entrada,
-            dataPgtoInicial: document.getElementById('dataPgtoInicial').value,
-            primeiroPagamentoMes: document.getElementById('pagamentoMes').value,
-            primeiroPagamentoAno: anoParaSalvar,
-            formaPagamento: formaPgto,
-            statusFinanceiro: "Pendente",
-            pago: false,
-            vezes: "1",
+    const filtrados = vendasCache.filter(venda => {
+        let matchVendedor = (selVendedor === "todos" || venda.vendedor === selVendedor);
+        let matchMes = (selMes === "todos" || venda.pagamentoMes === selMes);
 
-            // Campos de Operação (CS/Tráfego)
-            areaAtuacao: document.getElementById('area').value,
-            perfilCliente: document.getElementById('perfil').value,
-            tipoCampanha: document.getElementById('tipoCampanha').value,
-            investimentoMensal: document.getElementById('investimento').value,
-            instagramCliente: document.getElementById('instagram').value,
-            jaInvestia: document.getElementById('jaInvestia').value,
-            onboardingAconteceu: false,
-            dataCadastro: serverTimestamp()
-        };
-
-        try {
-            await addDoc(collection(db, "vendas"), novaVenda);
-            alert("Venda cadastrada e enviada ao financeiro!");
-            vendaForm.reset();
-        } catch (error) {
-            console.error("Erro ao salvar a venda:", error);
-            alert("Erro ao salvar dados.");
+        let matchAno = true;
+        if (selAno !== "todos" && venda.dataPgtoInicial) {
+            const partes = venda.dataPgtoInicial.split('/');
+            if (partes.length === 3) {
+                matchAno = (partes[2] === selAno);
+            }
         }
-    });
-}
 
-// Renderização da tabela e atualização dos totais
-const renderizarVendas = () => {
-    if (!listaCorpo) return;
-
-    const vFiltro = selVendedor ? selVendedor.value : "todos";
-    const mFiltro = selMes ? selMes.value : "todos";
-    const aFiltro = selAno ? selAno.value : "todos";
-
-    listaCorpo.innerHTML = "";
-    let totalMensalidades = 0;
-    let totalEntradas = 0;
-
-    dadosVendas.forEach(d => {
-        const dataObjeto = d.dataCadastro?.seconds ? new Date(d.dataCadastro.seconds * 1000) : null;
-        const anoVenda = dataObjeto ? dataObjeto.getFullYear().toString() : "";
-
-        const vBate = vFiltro === "todos" || d.vendedor === vFiltro;
-        const mBate = mFiltro === "todos" || d.primeiroPagamentoMes === mFiltro;
-        const aBate = aFiltro === "todos" || anoVenda === aFiltro;
-
-        if (vBate && mBate && aBate) {
-            totalMensalidades += parseMoeda(d.mensalidadePlano || d.valorTotal);
-            totalEntradas += parseMoeda(d.pagamentoInicial || d.valorEntrada);
-
-            const dataF = dataObjeto ? dataObjeto.toLocaleDateString('pt-BR') : "--/--/----";
-            listaCorpo.innerHTML += `
-                <tr>
-                    <td>${dataF}</td>
-                    <td style="font-weight: bold;">${d.cliente || ''}</td>
-                    <td>${d.vendedor || ''}</td>
-                    <td>${d.plano || ''}</td>
-                    <td>${d.mensalidadePlano || d.valorTotal || ''}</td>
-                    <td>${d.pagamentoInicial || d.valorEntrada || ''}</td>
-                    <td>${d.telefone || ''}</td>
-                    <td><button onclick="excluirVenda('${d.id}')" style="color:var(--danger); background:none; border:none; cursor:pointer;">Excluir</button></td>
-                </tr>`;
-        }
+        return matchVendedor && matchMes && matchAno;
     });
 
-    // Atualização dos Cards de Total
-    const elTotalMensalidades = document.getElementById('totalMensalidades');
-    const elTotalEntradas = document.getElementById('totalEntradas');
-    if (elTotalMensalidades) elTotalMensalidades.textContent = formatarMoeda(totalMensalidades);
-    if (elTotalEntradas) elTotalEntradas.textContent = formatarMoeda(totalEntradas);
+    filtrados.forEach(venda => {
+        totalMens += parseMoeda(venda.mensalidadePlano);
+        totalEnt += parseMoeda(venda.pagamentoInicial);
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+            <td>${venda.dataPgtoInicial || '-'}</td>
+            <td>${venda.nomeCliente || '-'}</td>
+            <td>${venda.vendedor || '-'}</td>
+            <td>${venda.plano || '-'}</td>
+            <td>${venda.mensalidadePlano || '-'}</td>
+            <td>${venda.pagamentoInicial || '-'}</td>
+            <td>${venda.telefone || '-'}</td>
+            <td>
+                <button class="btn-deletar" data-id="${venda.id}" style="background-color: var(--danger, #e74c3c); color: #fff; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Excluir</button>
+            </td>
+        `;
+        listaVendasCorpo.appendChild(tr);
+    });
+
+    document.getElementById('totalMensalidades').innerText = formatarMoeda(totalMens);
+    document.getElementById('totalEntradas').innerText = formatarMoeda(totalEnt);
+
+    document.querySelectorAll('.btn-deletar').forEach(btn => {
+        btn.addEventListener('click', async (e) => {
+            const id = e.target.getAttribute('data-id');
+            if (confirm("Tem certeza que deseja excluir esta venda?")) {
+                try {
+                    await deleteDoc(doc(db, "vendas", id));
+                } catch (err) {
+                    console.error("Erro ao deletar:", err);
+                }
+            }
+        });
+    });
 };
 
-// Listagem na página inicial (Vendas)
-if (listaCorpo) {
-    onSnapshot(query(collection(db, "vendas"), orderBy("dataCadastro", "desc")), (snap) => {
-        dadosVendas = snap.docs.map(docSnap => ({ id: docSnap.id, ...docSnap.data() }));
-        renderizarVendas();
+filtroVendedor.addEventListener('change', renderizarTabela);
+filtroMes.addEventListener('change', renderizarTabela);
+filtroAno.addEventListener('change', renderizarTabela);
+
+const q = query(collection(db, "vendas"), orderBy("dataCadastro", "desc"));
+onSnapshot(q, (snapshot) => {
+    vendasCache = [];
+    snapshot.forEach((doc) => {
+        vendasCache.push({ id: doc.id, ...doc.data() });
     });
-
-    if (selVendedor) selVendedor.addEventListener('change', renderizarVendas);
-    if (selMes) selMes.addEventListener('change', renderizarVendas);
-    if (selAno) selAno.addEventListener('change', renderizarVendas);
-}
-
-// Função global para excluir vendas
-window.excluirVenda = async (id) => {
-    if (confirm("Tem certeza que deseja excluir esta venda?")) {
-        try {
-            await deleteDoc(doc(db, "vendas", id));
-        } catch (error) {
-            console.error("Erro ao excluir venda:", error);
-        }
-    }
-};
-
-// Função global para Logout
-window.btnLogout = () => signOut(auth).then(() => window.location.href = "login.html");
+    renderizarTabela();
+});

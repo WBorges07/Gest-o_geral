@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CRM Pro - Gestão de Tráfego</title>
     <link rel="stylesheet" href="style.css">
+    <script src="https://unpkg.com/imask"></script>
     <style>
         .tabs-squad {
             display: flex;
@@ -17,11 +18,11 @@
             background: var(--input);
             color: #aaa;
             border: 1px solid var(--border);
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             transition: var(--transition);
         }
         .tab-btn:hover {
@@ -33,106 +34,105 @@
             color: var(--accent);
             border-color: var(--accent);
         }
-
-        /* Estilização dos Selects Coloridos */
-        .select-status {
-            padding: 6px 10px;
+        .select-status-trafego {
+            padding: 5px 8px;
             border-radius: 6px;
             font-weight: 600;
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             border: 1px solid var(--border);
             outline: none;
             cursor: pointer;
             transition: var(--transition);
-            width: 100%;
         }
-
-        /* Cores de Campanha */
-        .select-status.rodando {
-            background-color: rgba(0, 255, 136, 0.2);
-            color: var(--accent);
-            border-color: var(--accent);
-        }
-        .select-status.pausada {
-            background-color: rgba(255, 153, 0, 0.2);
-            color: #ff9900;
-            border-color: #ff9900;
-        }
-        .select-status.encerrada {
-            background-color: rgba(255, 68, 68, 0.2);
-            color: #ff4444;
-            border-color: #ff4444;
-        }
-
-        /* Cores de Satisfação */
-        .select-status.satisfeito {
-            background-color: rgba(0, 255, 136, 0.2);
-            color: var(--accent);
-            border-color: var(--accent);
-        }
-        .select-status.alerta {
+        .select-status-trafego.subindo {
             background-color: rgba(255, 204, 0, 0.2);
             color: #ffcc00;
             border-color: #ffcc00;
         }
-        .select-status.insatisfeito {
+        .select-status-trafego.ativo {
+            background-color: rgba(0, 255, 136, 0.2);
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+        .select-status-trafego.pausado {
             background-color: rgba(255, 68, 68, 0.2);
             color: #ff4444;
             border-color: #ff4444;
         }
 
-        /* Cores de Tendência */
-        .select-status.subir {
+        .select-tendencia {
+            padding: 5px 8px;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.8rem;
+            border: 1px solid var(--border);
+            outline: none;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .select-tendencia.subir {
             background-color: rgba(255, 68, 68, 0.2);
             color: #ff4444;
             border-color: #ff4444;
         }
-        .select-status.manter {
+        .select-tendencia.manter {
             background-color: rgba(0, 122, 255, 0.2);
             color: #3399ff;
             border-color: #007aff;
         }
-        .select-status.descer {
+        .select-tendencia.descer {
             background-color: rgba(0, 255, 136, 0.2);
             color: var(--accent);
             border-color: var(--accent);
         }
 
-        /* Campos Editáveis em Reais e Textareas */
-        .input-real-trafego {
-            width: 110px;
-            padding: 6px 8px;
+        .select-satisfacao {
+            padding: 5px 8px;
             border-radius: 6px;
+            font-weight: 600;
+            font-size: 0.8rem;
             border: 1px solid var(--border);
-            background: var(--input);
-            color: var(--text);
-            font-size: 0.85rem;
             outline: none;
+            cursor: pointer;
         }
-
+        .select-satisfacao.satisfeito {
+            background-color: rgba(0, 255, 136, 0.2);
+            color: var(--accent);
+            border-color: var(--accent);
+        }
+        .select-satisfacao.alerta {
+            background-color: rgba(255, 204, 0, 0.2);
+            color: #ffcc00;
+            border-color: #ffcc00;
+        }
+        .select-satisfacao.insatisfeito {
+            background-color: rgba(255, 68, 68, 0.2);
+            color: #ff4444;
+            border-color: #ff4444;
+        }
         .input-textarea-trafego {
             width: 100%;
-            min-width: 180px;
-            min-height: 55px;
-            padding: 6px 8px;
+            min-width: 140px;
+            max-width: 220px;
+            min-height: 42px;
+            padding: 5px 8px;
             border-radius: 6px;
             border: 1px solid var(--border);
             background: var(--input);
             color: var(--text);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             resize: vertical;
             box-sizing: border-box;
         }
-
-        .table-container {
-            overflow-x: auto;
+        .input-moeda-trafego {
+            width: 95px;
+            padding: 5px 6px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--input);
+            color: var(--text);
+            font-size: 0.8rem;
         }
-
-        table th {
-            white-space: nowrap;
-        }
-
-        /* Estilização do Botão Sair no Menu */
         .btn-logout {
             margin-top: auto;
             background: rgba(255, 68, 68, 0.15);
@@ -164,6 +164,8 @@
             <li><a href="financeiro.html">Financeiro</a></li>
             <li><a href="cs.html">CS</a></li>
             <li><a href="#" class="active">Gestão de Tráfego</a></li>
+            <li><a href="midias.html">Mídias</a></li>
+            <li><a href="bi.html">B.I</a></li>
         </ul>
     </div>
     <div style="padding: 15px;">
@@ -172,9 +174,9 @@
 </nav>
 
 <main class="main-content">
-    <div class="container" style="max-width: 1700px;">
-        <h2>🎯 Gestão de Tráfego</h2>
-        
+    <div class="container">
+        <h2>🚦 Gestão de Tráfego</h2>
+
         <!-- ABAS DE SQUADS -->
         <div class="tabs-squad">
             <button class="tab-btn active" data-squad="todos">Todos</button>
@@ -182,54 +184,24 @@
             <button class="tab-btn" data-squad="Squad Titans">Squad Titans</button>
         </div>
 
-        <div class="filter-container">
-            <div class="field">
-                <label>Vendedor</label>
-                <select id="filtroVendedorTrafego">
-                    <option value="todos">Todos</option>
-                    <option>Ronny</option><option>Névio</option><option>Marysol</option>
-                    <option>Victor</option><option>Bianca</option><option>Wagner</option>
-                </select>
-            </div>
-            <div class="field">
-                <label>Mês Referência</label>
-                <select id="filtroMesTrafego">
-                    <option value="todos">Todos</option>
-                    <option>Janeiro</option><option>Fevereiro</option><option>Março</option>
-                    <option>Abril</option><option>Maio</option><option>Junho</option>
-                    <option>Julho</option><option>Agosto</option><option>Setembro</option>
-                    <option>Outubro</option><option>Novembro</option><option>Dezembro</option>
-                </select>
-            </div>
-            <div class="field">
-                <label>Ano</label>
-                <select id="filtroAnoTrafego">
-                    <option value="todos">Todos os Anos</option>
-                    <option value="2024">2024</option>
-                    <option value="2025">2025</option>
-                    <option value="2026" selected>2026</option>
-                </select>
-            </div>
-        </div>
-
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
-                        <th>Data Venda</th>
-                        <th>Vendedor</th>
                         <th>Cliente</th>
                         <th>Telefone</th>
-                        <th>Campanha</th>
-                        <th>Satisfação</th>
-                        <th style="min-width: 120px;">CPL</th>
-                        <th style="min-width: 140px;">Tendência</th>
-                        <th style="min-width: 120px;">Orçamento</th>
-                        <th style="min-width: 120px;">Saldo Restante</th>
-                        <th>Área de Atuação</th>
-                        <th style="min-width: 190px;">Teses (CS)</th>
-                        <th style="min-width: 190px;">Observações (CS)</th>
-                        <th>Social Mídia</th>
+                        <th>Squad</th>
+                        <th>Gestor de Tráfego</th>
+                        <th>Investimento Mensal</th>
+                        <th>Plataforma de Início</th>
+                        <th>Status da Campanha</th>
+                        <th>CPL</th>
+                        <th>Tendência</th>
+                        <th>Orçamento</th>
+                        <th>Saldo Restante</th>
+                        <th>Grau de Satisfação</th>
+                        <th style="min-width: 150px;">Estratégia Adotada</th>
+                        <th style="min-width: 150px;">Observações</th>
                     </tr>
                 </thead>
                 <tbody id="listaTrafegoCorpo"></tbody>
