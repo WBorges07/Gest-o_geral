@@ -117,6 +117,8 @@
 </head>
 <body class="dark-mode">
 
+<input type="file" id="fileInputGlobal" multiple style="display: none;">
+
 <nav class="sidebar" style="display: flex; flex-direction: column; justify-content: space-between; height: 100vh;">
     <div>
         <div class="sidebar-header">
@@ -132,13 +134,13 @@
         </ul>
     </div>
     <div style="padding: 15px;">
-        <button id="btnSair" class="btn-logout">🚪 Sair</button>
+        <button id="btnSair" class="btn-logout"> Sair</button>
     </div>
 </nav>
 
 <main class="main-content">
     <div class="container">
-        <h2>📎 Gestão de Mídias e Arquivos Locais</h2>
+        <h2>📎 Gestão de Mídias e Arquivos</h2>
 
         <!-- ABAS DE SQUADS -->
         <div class="tabs-squad">
@@ -163,6 +165,14 @@
         </div>
     </div>
 </main>
+
+<script>
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.classList.contains('btn-clip')) {
+            document.getElementById('fileInputGlobal').click();
+        }
+    });
+</script>
 
 <script type="module" src="midias.js"></script>
 </body>
