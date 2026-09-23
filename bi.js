@@ -35,6 +35,12 @@ let chartVendasMesInstance = null;
 let chartVendedoresInstance = null;
 let chartSatisfacaoSquadInstance = null;
 
+// Cor de texto dos gráficos acompanha o tema atual
+const corTexto = () => getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#fff';
+const corGrade = () => getComputedStyle(document.documentElement).getPropertyValue('--border').trim() || 'rgba(255,255,255,0.1)';
+
+let dadosBICache = [];
+
 const ordemMeses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
 const renderizarDashboardBI = (dados) => {
@@ -103,7 +109,7 @@ const renderizarDashboardBI = (dados) => {
                 backgroundColor: ['#00ff88', '#007aff', '#ffcc00', '#ff4444', '#9b59b6', '#e67e22', '#1abc9c', '#34495e']
             }]
         },
-        options: { responsive: true, plugins: { legend: { labels: { color: '#fff' } } } }
+        options: { responsive: true, plugins: { legend: { labels: { color: corTexto() } } } }
     });
 
     // --- GRÁFICO 2: PERFORMANCE POR MÊS (Barra) ---
@@ -125,10 +131,10 @@ const renderizarDashboardBI = (dados) => {
         options: {
             responsive: true,
             scales: {
-                x: { ticks: { color: '#fff' } },
-                y: { ticks: { color: '#fff' }, beginAtZero: true }
+                x: { ticks: { color: corTexto() }, grid: { color: corGrade() } },
+                y: { ticks: { color: corTexto() }, grid: { color: corGrade() }, beginAtZero: true }
             },
-            plugins: { legend: { labels: { color: '#fff' } } }
+            plugins: { legend: { labels: { color: corTexto() } } }
         }
     });
 
@@ -149,10 +155,10 @@ const renderizarDashboardBI = (dados) => {
             indexAxis: 'y',
             responsive: true,
             scales: {
-                x: { ticks: { color: '#fff' }, beginAtZero: true },
-                y: { ticks: { color: '#fff' } }
+                x: { ticks: { color: corTexto() }, grid: { color: corGrade() }, beginAtZero: true },
+                y: { ticks: { color: corTexto() }, grid: { color: corGrade() } }
             },
-            plugins: { legend: { labels: { color: '#fff' } } }
+            plugins: { legend: { labels: { color: corTexto() } } }
         }
     });
 
@@ -185,15 +191,21 @@ const renderizarDashboardBI = (dados) => {
         options: {
             responsive: true,
             scales: {
-                x: { stacked: true, ticks: { color: '#fff' } },
-                y: { stacked: true, ticks: { color: '#fff' }, beginAtZero: true }
+                x: { stacked: true, ticks: { color: corTexto() }, grid: { color: corGrade() } },
+                y: { stacked: true, ticks: { color: corTexto() }, grid: { color: corGrade() }, beginAtZero: true }
             },
-            plugins: { legend: { labels: { color: '#fff' } } }
+            plugins: { legend: { labels: { color: corTexto() } } }
         }
     });
 };
 
 onSnapshot(query(collection(db, "vendas"), orderBy("dataCadastro", "desc")), (snap) => {
     const dados = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    dadosBICache = dados;
     renderizarDashboardBI(dados);
+});
+
+// Redesenha os gráficos quando o tema é alternado
+window.addEventListener('temaAlterado', () => {
+    renderizarDashboardBI(dadosBICache);
 });
