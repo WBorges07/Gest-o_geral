@@ -37,11 +37,10 @@ const filtroAnoCS = document.getElementById('filtroAnoCS');
 
 let vendasCSCache = [];
 
-const aplicarClasseMaterial = (selectEl, valor) => {
-    selectEl.classList.remove('entregue', 'revisao', 'aprovado');
-    if (valor === "Entregue") selectEl.classList.add('entregue');
-    if (valor === "Em Revisão") selectEl.classList.add('revisao');
-    if (valor === "Aprovado") selectEl.classList.add('aprovado');
+const aplicarClasseStatusCS = (selectEl, valor) => {
+    selectEl.classList.remove('agendado', 'realizado', 'cancelado');
+    if (valor === "Sim") selectEl.classList.add('realizado');
+    if (valor === "Não") selectEl.classList.add('cancelado');
 };
 
 const renderizarTabelaCS = () => {
@@ -69,67 +68,88 @@ const renderizarTabelaCS = () => {
     filtrados.forEach(venda => {
         const tr = document.createElement('tr');
 
+        const jaInvestia = venda.jaInvestia || "Não";
+        const nomeEscritorio = venda.nomeEscritorio || "";
+        const telefoneCampanha = venda.telefoneCampanha || "";
         const dataOnboarding = venda.dataOnboarding || "";
         const horarioOnboarding = venda.horarioOnboarding || "";
+        const instagram = venda.instagram || "";
+        const enderecoCompleto = venda.enderecoCompleto || "-";
+        const cep = venda.cep || "-";
         const onboardingAconteceu = venda.onboardingAconteceu || "Não";
-        const squad = venda.squad || "";
-        const statusMaterial = venda.statusMaterial || "Em Revisão";
-        const tesesCS = venda.tesesCS || "";
-        const observacoesCS = venda.observacoesCS || "";
-
-        const site = venda.siteLandingPage || "-";
-        const siteExibicao = site !== "-" && !site.startsWith("http") ? `https://${site}` : site;
-        const linkSite = site !== "-" ? `<a href="${siteExibicao}" target="_blank" style="color: var(--accent); text-decoration: underline;">${site}</a>` : "-";
+        const anotacoesCS = venda.anotacoesCS || "";
 
         tr.innerHTML = `
             <td>${venda.dataPgtoInicial || '-'}</td>
+            <td>
+                <select class="select-jainvestiu-cs" data-id="${venda.id}" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+                    <option value="Sim" ${jaInvestia === "Sim" ? "selected" : ""}>Sim</option>
+                    <option value="Não" ${jaInvestia === "Não" ? "selected" : ""}>Não</option>
+                </select>
+            </td>
             <td>${venda.vendedor || '-'}</td>
             <td>${venda.nomeCliente || '-'}</td>
+            <td>
+                <input type="text" class="input-escritorio-cs" data-id="${venda.id}" value="${nomeEscritorio}" placeholder="Nome do escritório" style="width: 140px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+            </td>
             <td>${venda.telefone || '-'}</td>
             <td>
-                <input type="text" class="input-data-cs" data-id="${venda.id}" value="${dataOnboarding}" placeholder="DD/MM/AAAA" style="width: 100px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+                <input type="text" class="input-tel-campanha-cs" data-id="${venda.id}" value="${telefoneCampanha}" placeholder="(00) 00000-0000" style="width: 130px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
             </td>
             <td>
-                <input type="text" class="input-hora-cs" data-id="${venda.id}" value="${horarioOnboarding}" placeholder="00:00" style="width: 70px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+                <input type="date" class="input-data-onboarding" data-id="${venda.id}" value="${dataOnboarding}" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
             </td>
             <td>
-                <select class="select-onboarding" data-id="${venda.id}" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+                <input type="time" class="input-horario-onboarding" data-id="${venda.id}" value="${horarioOnboarding}" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+            </td>
+            <td>
+                <input type="text" class="input-instagram-cs" data-id="${venda.id}" value="${instagram}" placeholder="@usuario" style="width: 110px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+            </td>
+            <td>${enderecoCompleto}</td>
+            <td>${cep}</td>
+            <td>
+                <select class="select-status-cs" data-id="${venda.id}">
                     <option value="Sim" ${onboardingAconteceu === "Sim" ? "selected" : ""}>Sim</option>
                     <option value="Não" ${onboardingAconteceu === "Não" ? "selected" : ""}>Não</option>
                 </select>
             </td>
+            <td>${venda.plano || '-'}</td>
+            <td>${venda.repagInstagram || '-'}</td>
             <td>
-                <select class="select-squad" data-id="${venda.id}" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
-                    <option value="" ${squad === "" ? "selected" : ""}>Selecione...</option>
-                    <option value="Squad Black Mamba" ${squad === "Squad Black Mamba" ? "selected" : ""}>Squad Black Mamba</option>
-                    <option value="Squad Titans" ${squad === "Squad Titans" ? "selected" : ""}>Squad Titans</option>
-                </select>
-            </td>
-            <td>${venda.area || '-'}</td>
-            <td>${linkSite}</td>
-            <td>${venda.plataformaInicio || '-'}</td>
-            <td>${venda.regiaoAnunciar || '-'}</td>
-            <td>
-                <select class="select-material" data-id="${venda.id}">
-                    <option value="Entregue" ${statusMaterial === "Entregue" ? "selected" : ""}>Entregue</option>
-                    <option value="Em Revisão" ${statusMaterial === "Em Revisão" ? "selected" : ""}>Em Revisão</option>
-                    <option value="Aprovado" ${statusMaterial === "Aprovado" ? "selected" : ""}>Aprovado</option>
-                </select>
-            </td>
-            <td>
-                <textarea class="input-textarea-cs input-teses" data-id="${venda.id}" placeholder="Digitar teses...">${tesesCS}</textarea>
-            </td>
-            <td>
-                <textarea class="input-textarea-cs input-obs" data-id="${venda.id}" placeholder="Digitar observações...">${observacoesCS}</textarea>
+                <textarea class="input-textarea-cs input-anotacoes-cs" data-id="${venda.id}" placeholder="Digitar anotações...">${anotacoesCS}</textarea>
             </td>
         `;
 
         listaCSCorpo.appendChild(tr);
     });
 
-    // Máscaras e Eventos
-    document.querySelectorAll('.input-data-cs').forEach(input => {
-        if (window.IMask) IMask(input, { mask: '00/00/0000' });
+    // Eventos e Máscaras
+    document.querySelectorAll('.select-jainvestiu-cs').forEach(select => {
+        select.addEventListener('change', async (e) => {
+            const id = e.target.getAttribute('data-id');
+            const val = e.target.value;
+            await updateDoc(doc(db, "vendas", id), { jaInvestia: val });
+        });
+    });
+
+    document.querySelectorAll('.input-escritorio-cs').forEach(input => {
+        input.addEventListener('change', async (e) => {
+            const id = e.target.getAttribute('data-id');
+            const val = e.target.value;
+            await updateDoc(doc(db, "vendas", id), { nomeEscritorio: val });
+        });
+    });
+
+    document.querySelectorAll('.input-tel-campanha-cs').forEach(input => {
+        if (window.IMask) IMask(input, { mask: '(00) 00000-0000' });
+        input.addEventListener('change', async (e) => {
+            const id = e.target.getAttribute('data-id');
+            const val = e.target.value;
+            await updateDoc(doc(db, "vendas", id), { telefoneCampanha: val });
+        });
+    });
+
+    document.querySelectorAll('.input-data-onboarding').forEach(input => {
         input.addEventListener('change', async (e) => {
             const id = e.target.getAttribute('data-id');
             const val = e.target.value;
@@ -137,8 +157,7 @@ const renderizarTabelaCS = () => {
         });
     });
 
-    document.querySelectorAll('.input-hora-cs').forEach(input => {
-        if (window.IMask) IMask(input, { mask: '00:00' });
+    document.querySelectorAll('.input-horario-onboarding').forEach(input => {
         input.addEventListener('change', async (e) => {
             const id = e.target.getAttribute('data-id');
             const val = e.target.value;
@@ -146,45 +165,29 @@ const renderizarTabelaCS = () => {
         });
     });
 
-    document.querySelectorAll('.select-onboarding').forEach(select => {
+    document.querySelectorAll('.input-instagram-cs').forEach(input => {
+        input.addEventListener('change', async (e) => {
+            const id = e.target.getAttribute('data-id');
+            const val = e.target.value;
+            await updateDoc(doc(db, "vendas", id), { instagram: val });
+        });
+    });
+
+    document.querySelectorAll('.select-status-cs').forEach(select => {
+        aplicarClasseStatusCS(select, select.value);
         select.addEventListener('change', async (e) => {
             const id = e.target.getAttribute('data-id');
             const val = e.target.value;
+            aplicarClasseStatusCS(e.target, val);
             await updateDoc(doc(db, "vendas", id), { onboardingAconteceu: val });
         });
     });
 
-    document.querySelectorAll('.select-squad').forEach(select => {
-        select.addEventListener('change', async (e) => {
-            const id = e.target.getAttribute('data-id');
-            const val = e.target.value;
-            await updateDoc(doc(db, "vendas", id), { squad: val });
-        });
-    });
-
-    document.querySelectorAll('.select-material').forEach(select => {
-        aplicarClasseMaterial(select, select.value);
-        select.addEventListener('change', async (e) => {
-            const id = e.target.getAttribute('data-id');
-            const val = e.target.value;
-            aplicarClasseMaterial(e.target, val);
-            await updateDoc(doc(db, "vendas", id), { statusMaterial: val });
-        });
-    });
-
-    document.querySelectorAll('.input-teses').forEach(textarea => {
+    document.querySelectorAll('.input-anotacoes-cs').forEach(textarea => {
         textarea.addEventListener('change', async (e) => {
             const id = e.target.getAttribute('data-id');
             const val = e.target.value;
-            await updateDoc(doc(db, "vendas", id), { tesesCS: val });
-        });
-    });
-
-    document.querySelectorAll('.input-obs').forEach(textarea => {
-        textarea.addEventListener('change', async (e) => {
-            const id = e.target.getAttribute('data-id');
-            const val = e.target.value;
-            await updateDoc(doc(db, "vendas", id), { observacoesCS: val });
+            await updateDoc(doc(db, "vendas", id), { anotacoesCS: val });
         });
     });
 };

@@ -62,6 +62,9 @@ if (window.IMask) {
 
     const pagInput = document.getElementById('pagamentoInicial');
     if (pagInput) IMask(pagInput, maskMoedaOptions);
+
+    const cepInput = document.getElementById('cep');
+    if (cepInput) IMask(cepInput, { mask: '00000-000' });
 }
 
 const vendaForm = document.getElementById('vendaForm');
@@ -80,6 +83,7 @@ vendaForm.addEventListener('submit', async (e) => {
         nomeCliente: document.getElementById('nomeCliente').value,
         telefone: document.getElementById('telefone').value,
         plano: document.getElementById('plano').value,
+        repagInstagram: document.getElementById('repagInstagram').value,
         vigencia: document.getElementById('vigencia').value,
         area: document.getElementById('area').value,
         perfil: document.getElementById('perfil').value,
@@ -95,6 +99,8 @@ vendaForm.addEventListener('submit', async (e) => {
         siteLandingPage: document.getElementById('siteLandingPage').value,
         plataformaInicio: document.getElementById('plataformaInicio').value,
         regiaoAnunciar: document.getElementById('regiaoAnunciar').value,
+        enderecoCompleto: document.getElementById('enderecoCompleto').value,
+        cep: document.getElementById('cep').value,
         dataCadastro: new Date().toISOString()
     };
 

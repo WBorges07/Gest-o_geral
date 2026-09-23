@@ -31,33 +31,11 @@ if (btnSair) {
 }
 
 const listaTrafegoCorpo = document.getElementById('listaTrafegoCorpo');
-const tabBtns = document.querySelectorAll('.tab-btn');
+const filtroVendedorTrafego = document.getElementById('filtroVendedorTrafego');
+const filtroMesTrafego = document.getElementById('filtroMesTrafego');
+const filtroAnoTrafego = document.getElementById('filtroAnoTrafego');
 
 let vendasTrafegoCache = [];
-let squadFiltro = "todos";
-
-tabBtns.forEach(btn => {
-    btn.addEventListener('click', (e) => {
-        tabBtns.forEach(b => b.classList.remove('active'));
-        e.target.classList.add('active');
-        squadFiltro = e.target.getAttribute('data-squad');
-        renderizarTabelaTrafego();
-    });
-});
-
-const aplicarClasseStatus = (selectEl, valor) => {
-    selectEl.classList.remove('subindo', 'ativo', 'pausado');
-    if (valor === "Subindo Campanha") selectEl.classList.add('subindo');
-    if (valor === "Ativo") selectEl.classList.add('ativo');
-    if (valor === "Pausado") selectEl.classList.add('pausado');
-};
-
-const aplicarClasseTendencia = (selectEl, valor) => {
-    selectEl.classList.remove('subir', 'manter', 'descer');
-    if (valor === "Subir") selectEl.classList.add('subir');
-    if (valor === "Manter") selectEl.classList.add('manter');
-    if (valor === "Descer") selectEl.classList.add('descer');
-};
 
 const aplicarClasseSatisfacao = (selectEl, valor) => {
     selectEl.classList.remove('satisfeito', 'alerta', 'insatisfeito');
@@ -67,61 +45,80 @@ const aplicarClasseSatisfacao = (selectEl, valor) => {
 };
 
 const renderizarTabelaTrafego = () => {
+    const selVendedor = filtroVendedorTrafego.value;
+    const selMes = filtroMesTrafego.value;
+    const selAno = filtroAnoTrafego.value;
+
     listaTrafegoCorpo.innerHTML = "";
 
-    // Filtra apenas clientes onde Onboarding aconteceu = "Sim"
     const filtrados = vendasTrafegoCache.filter(venda => {
-        const matchOnboarding = venda.onboardingAconteceu === "Sim";
-        const matchSquad = squadFiltro === "todos" || venda.squad === squadFiltro;
-        return matchOnboarding && matchSquad;
+        // Só aparece após "On. aconteceu?" = "Sim" na aba CS
+        if (venda.onboardingAconteceu !== "Sim") return false;
+
+        let matchVendedor = (selVendedor === "todos" || venda.vendedor === selVendedor);
+        let matchMes = (selMes === "todos" || venda.pagamentoMes === selMes);
+
+        let matchAno = true;
+        if (selAno !== "todos" && venda.dataPgtoInicial) {
+            const partes = venda.dataPgtoInicial.split('/');
+            if (partes.length === 3) {
+                matchAno = (partes[2] === selAno);
+            }
+        }
+
+        return matchVendedor && matchMes && matchAno;
     });
 
     filtrados.forEach(venda => {
         const tr = document.createElement('tr');
 
-        const telefoneCliente = venda.telefoneCliente || venda.telefone || "-";
+        const nomeEscritorio = venda.nomeEscritorio || "";
+        const telefoneCampanha = venda.telefoneCampanha || "";
+        const squad = venda.squad || "";
+        const enderecoCompleto = venda.enderecoCompleto || "-";
+        const cep = venda.cep || "-";
+        const instagram = venda.instagram || "";
         const gestorTrafego = venda.gestorTrafego || "";
-        const statusCampanha = venda.statusCampanha || "Subindo Campanha";
-        const cplTrafego = venda.cplTrafego || "";
-        const tendenciaTrafego = venda.tendenciaTrafego || "Manter";
-        const orcamentoTrafego = venda.orcamentoTrafego || "";
-        const saldoRestanteTrafego = venda.saldoRestanteTrafego || "";
+        const jaInvestia = venda.jaInvestia || "Não";
         const satisfacao = venda.satisfacao || "Satisfeito";
-        const estrategiaTrafego = venda.estrategiaTrafego || "";
+        const linkGerenciador = venda.linkGerenciador || "";
         const observacoesTrafego = venda.observacoesTrafego || "";
 
         tr.innerHTML = `
-            <td style="font-weight: bold;">${venda.nomeCliente || '-'}</td>
-            <td>${telefoneCliente}</td>
-            <td><span style="background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border);">${venda.squad || 'Não atribuído'}</span></td>
+            <td>${venda.dataPgtoInicial || '-'}</td>
+            <td>${venda.vendedor || '-'}</td>
+            <td>${venda.nomeCliente || '-'}</td>
             <td>
-                <input type="text" class="input-gestor" data-id="${venda.id}" value="${gestorTrafego}" placeholder="Nome do Gestor..." style="width: 100%; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+                <input type="text" class="input-escritorio-trafego" data-id="${venda.id}" value="${nomeEscritorio}" placeholder="Nome do escritório" style="width: 140px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
             </td>
-            <td style="color: var(--accent); font-weight: bold;">${venda.investimento || 'R$ 0,00'}</td>
-            <td>${venda.plataformaInicio || '-'}</td>
+            <td>${venda.telefone || '-'}</td>
             <td>
-                <select class="select-status-trafego" data-id="${venda.id}">
-                    <option value="Subindo Campanha" ${statusCampanha === "Subindo Campanha" ? "selected" : ""}>Subindo Campanha</option>
-                    <option value="Ativo" ${statusCampanha === "Ativo" ? "selected" : ""}>Ativo</option>
-                    <option value="Pausado" ${statusCampanha === "Pausado" ? "selected" : ""}>Pausado</option>
+                <input type="text" class="input-tel-campanha" data-id="${venda.id}" value="${telefoneCampanha}" placeholder="(00) 00000-0000" style="width: 130px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+            </td>
+            <td>
+                <select class="select-squad-trafego" data-id="${venda.id}" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+                    <option value="" ${squad === "" ? "selected" : ""}>Selecione...</option>
+                    <option value="Squad Black Mamba" ${squad === "Squad Black Mamba" ? "selected" : ""}>Squad Black Mamba</option>
+                    <option value="Squad Titans" ${squad === "Squad Titans" ? "selected" : ""}>Squad Titans</option>
                 </select>
             </td>
+            <td>${enderecoCompleto}</td>
+            <td>${cep}</td>
             <td>
-                <input type="text" class="input-moeda-trafego input-cpl" data-id="${venda.id}" value="${cplTrafego}" placeholder="R$ 0,00">
+                <input type="text" class="input-instagram-trafego" data-id="${venda.id}" value="${instagram}" placeholder="@usuario" style="width: 110px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+            </td>
+            <td>${venda.repagInstagram || '-'}</td>
+            <td>
+                <input type="text" class="input-gestor-trafego" data-id="${venda.id}" value="${gestorTrafego}" placeholder="Nome do gestor" style="width: 120px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
             </td>
             <td>
-                <select class="select-tendencia" data-id="${venda.id}">
-                    <option value="Subir" ${tendenciaTrafego === "Subir" ? "selected" : ""}>⬆️ Subir</option>
-                    <option value="Manter" ${tendenciaTrafego === "Manter" ? "selected" : ""}>➡ Manter</option>
-                    <option value="Descer" ${tendenciaTrafego === "Descer" ? "selected" : ""}>⬇️ Descer</option>
+                <select class="select-jainvestiu-trafego" data-id="${venda.id}" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+                    <option value="Sim" ${jaInvestia === "Sim" ? "selected" : ""}>Sim</option>
+                    <option value="Não" ${jaInvestia === "Não" ? "selected" : ""}>Não</option>
                 </select>
             </td>
-            <td>
-                <input type="text" class="input-moeda-trafego input-orcamento" data-id="${venda.id}" value="${orcamentoTrafego}" placeholder="R$ 0,00">
-            </td>
-            <td>
-                <input type="text" class="input-moeda-trafego input-saldo" data-id="${venda.id}" value="${saldoRestanteTrafego}" placeholder="R$ 0,00">
-            </td>
+            <td>${venda.investimento || '-'}</td>
+            <td>${venda.plano || '-'}</td>
             <td>
                 <select class="select-satisfacao" data-id="${venda.id}">
                     <option value="Satisfeito" ${satisfacao === "Satisfeito" ? "selected" : ""}>Satisfeito</option>
@@ -130,7 +127,7 @@ const renderizarTabelaTrafego = () => {
                 </select>
             </td>
             <td>
-                <textarea class="input-textarea-trafego input-estrategia" data-id="${venda.id}" placeholder="Digitar estratégia...">${estrategiaTrafego}</textarea>
+                <textarea class="input-textarea-trafego input-link-gerenciador" data-id="${venda.id}" placeholder="Cole o link aqui...">${linkGerenciador}</textarea>
             </td>
             <td>
                 <textarea class="input-textarea-trafego input-obs-trafego" data-id="${venda.id}" placeholder="Digitar observações...">${observacoesTrafego}</textarea>
@@ -140,51 +137,41 @@ const renderizarTabelaTrafego = () => {
         listaTrafegoCorpo.appendChild(tr);
     });
 
-    // Eventos e Máscaras de Moeda
-    const maskMoedaOptions = {
-        mask: 'R$ num',
-        blocks: {
-            num: {
-                mask: Number,
-                thousandsSeparator: '.',
-                radix: ',',
-                mapToRadix: ['.']
-            }
-        }
-    };
-
-    // Máscara CPL
-    document.querySelectorAll('.input-cpl').forEach(input => {
-        if (window.IMask) IMask(input, maskMoedaOptions);
+    // Eventos e Aplicação da Máscara de Telefone
+    document.querySelectorAll('.input-escritorio-trafego').forEach(input => {
         input.addEventListener('change', async (e) => {
             const id = e.target.getAttribute('data-id');
             const val = e.target.value;
-            await updateDoc(doc(db, "vendas", id), { cplTrafego: val });
+            await updateDoc(doc(db, "vendas", id), { nomeEscritorio: val });
         });
     });
 
-    // Máscara Orçamento
-    document.querySelectorAll('.input-orcamento').forEach(input => {
-        if (window.IMask) IMask(input, maskMoedaOptions);
+    document.querySelectorAll('.input-tel-campanha').forEach(input => {
+        if (window.IMask) IMask(input, { mask: '(00) 00000-0000' });
         input.addEventListener('change', async (e) => {
             const id = e.target.getAttribute('data-id');
             const val = e.target.value;
-            await updateDoc(doc(db, "vendas", id), { orcamentoTrafego: val });
+            await updateDoc(doc(db, "vendas", id), { telefoneCampanha: val });
         });
     });
 
-    // Máscara Saldo Restante
-    document.querySelectorAll('.input-saldo').forEach(input => {
-        if (window.IMask) IMask(input, maskMoedaOptions);
+    document.querySelectorAll('.select-squad-trafego').forEach(select => {
+        select.addEventListener('change', async (e) => {
+            const id = e.target.getAttribute('data-id');
+            const val = e.target.value;
+            await updateDoc(doc(db, "vendas", id), { squad: val });
+        });
+    });
+
+    document.querySelectorAll('.input-instagram-trafego').forEach(input => {
         input.addEventListener('change', async (e) => {
             const id = e.target.getAttribute('data-id');
             const val = e.target.value;
-            await updateDoc(doc(db, "vendas", id), { saldoRestanteTrafego: val });
+            await updateDoc(doc(db, "vendas", id), { instagram: val });
         });
     });
 
-    // Gestor
-    document.querySelectorAll('.input-gestor').forEach(input => {
+    document.querySelectorAll('.input-gestor-trafego').forEach(input => {
         input.addEventListener('change', async (e) => {
             const id = e.target.getAttribute('data-id');
             const val = e.target.value;
@@ -192,29 +179,14 @@ const renderizarTabelaTrafego = () => {
         });
     });
 
-    // Status da Campanha
-    document.querySelectorAll('.select-status-trafego').forEach(select => {
-        aplicarClasseStatus(select, select.value);
+    document.querySelectorAll('.select-jainvestiu-trafego').forEach(select => {
         select.addEventListener('change', async (e) => {
             const id = e.target.getAttribute('data-id');
             const val = e.target.value;
-            aplicarClasseStatus(e.target, val);
-            await updateDoc(doc(db, "vendas", id), { statusCampanha: val });
+            await updateDoc(doc(db, "vendas", id), { jaInvestia: val });
         });
     });
 
-    // Tendência
-    document.querySelectorAll('.select-tendencia').forEach(select => {
-        aplicarClasseTendencia(select, select.value);
-        select.addEventListener('change', async (e) => {
-            const id = e.target.getAttribute('data-id');
-            const val = e.target.value;
-            aplicarClasseTendencia(e.target, val);
-            await updateDoc(doc(db, "vendas", id), { tendenciaTrafego: val });
-        });
-    });
-
-    // Satisfação
     document.querySelectorAll('.select-satisfacao').forEach(select => {
         aplicarClasseSatisfacao(select, select.value);
         select.addEventListener('change', async (e) => {
@@ -225,16 +197,14 @@ const renderizarTabelaTrafego = () => {
         });
     });
 
-    // Estratégia
-    document.querySelectorAll('.input-estrategia').forEach(textarea => {
+    document.querySelectorAll('.input-link-gerenciador').forEach(textarea => {
         textarea.addEventListener('change', async (e) => {
             const id = e.target.getAttribute('data-id');
             const val = e.target.value;
-            await updateDoc(doc(db, "vendas", id), { estrategiaTrafego: val });
+            await updateDoc(doc(db, "vendas", id), { linkGerenciador: val });
         });
     });
 
-    // Observações
     document.querySelectorAll('.input-obs-trafego').forEach(textarea => {
         textarea.addEventListener('change', async (e) => {
             const id = e.target.getAttribute('data-id');
@@ -243,6 +213,10 @@ const renderizarTabelaTrafego = () => {
         });
     });
 };
+
+filtroVendedorTrafego.addEventListener('change', renderizarTabelaTrafego);
+filtroMesTrafego.addEventListener('change', renderizarTabelaTrafego);
+filtroAnoTrafego.addEventListener('change', renderizarTabelaTrafego);
 
 const q = query(collection(db, "vendas"), orderBy("dataCadastro", "desc"));
 onSnapshot(q, (snapshot) => {

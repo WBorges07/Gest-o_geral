@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CRM Pro - Web Designer</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .designer-selection {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+        .designer-card {
+            flex: 1;
+            background: var(--input);
+            border: 1px solid var(--border);
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .designer-card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+        }
+        .designer-card.active {
+            background: rgba(0, 255, 136, 0.15);
+            border-color: var(--accent);
+        }
+        .designer-card h3 {
+            color: var(--text);
+            margin-bottom: 5px;
+        }
+        .designer-card span {
+            color: #aaa;
+            font-size: 0.85rem;
+        }
+        .select-status-web {
+            padding: 6px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--input);
+            color: var(--text);
+            font-size: 0.85rem;
+            outline: none;
+            cursor: pointer;
+        }
+        .btn-logout {
+            margin-top: auto;
+            background: rgba(255, 68, 68, 0.15);
+            color: #ff4444;
+            border: 1px solid #ff4444;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            width: 100%;
+            text-align: center;
+            transition: var(--transition);
+        }
+        .btn-logout:hover {
+            background: #ff4444;
+            color: #fff;
+        }
+    </style>
+</head>
+<body class="dark-mode">
+
+<nav class="sidebar" style="display: flex; flex-direction: column; justify-content: space-between; height: 100vh;">
+    <div>
+        <div class="sidebar-header">
+            <h3>Menu</h3>
+        </div>
+        <ul class="nav-links">
+            <li><a href="index.html">Vendas</a></li>
+            <li><a href="financeiro.html">Financeiro</a></li>
+            <li><a href="cs.html">CS</a></li>
+            <li><a href="trafego.html">Gestão de Tráfego</a></li>
+            <li><a href="midias.html">Mídias</a></li>
+            <li><a href="#" class="active">Web designer</a></li>
+            <li><a href="bi.html">B.I</a></li>
+        </ul>
+    </div>
+    <div style="padding: 15px;">
+        <button id="btnSair" class="btn-logout"> Sair</button>
+    </div>
+</nav>
+
+<main class="main-content">
+    <div class="container">
+        <h2>🎨 Gestão de Web Designers</h2>
+
+        <div class="designer-selection">
+            <div class="designer-card active" data-designer="Lucas">
+                <h3>Lucas</h3>
+                <span>Web Designer</span>
+            </div>
+            <div class="designer-card" data-designer="Phelippe">
+                <h3>Phelippe</h3>
+                <span>Web Designer</span>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Cliente</th>
+                        <th>Plano</th>
+                        <th>Site / Landing Page</th>
+                        <th>Responsável</th>
+                        <th>Status do Projeto</th>
+                        <th>Link do Projeto</th>
+                    </tr>
+                </thead>
+                <tbody id="listaWebCorpo"></tbody>
+            </table>
+        </div>
+    </div>
+</main>
+
+<script type="module" src="webdesigner.js"></script>
+</body>
+</html>

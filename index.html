@@ -20,6 +20,7 @@
             <li><a href="cs.html">CS</a></li>
             <li><a href="trafego.html">Gestão de Tráfego</a></li>
             <li><a href="midias.html">Mídias</a></li>
+            <li><a href="webdesigner.html">Web designer</a></li>
             <li><a href="bi.html">B.I</a></li>
         </ul>
     </div>
@@ -58,9 +59,14 @@
                     <select id="plano" required>
                         <option value="">Selecione...</option>
                         <option>Platina</option><option>Safira</option><option>Talismã</option>
-                        <option>Plattina + Social mídia</option><option>Safira + Social mídia</option>
-                        <option>Talismã + Social mídia</option><option>Somente IA</option>
-                        <option>Somente LP</option><option>Somente CRM</option>
+                    </select>
+                </div>
+
+                <div class="field">
+                    <label>Repag. do Instagram</label>
+                    <select id="repagInstagram">
+                        <option value="Sim">Sim</option>
+                        <option value="Não">Não</option>
                     </select>
                 </div>
 
@@ -165,6 +171,16 @@
                 <div class="field">
                     <label>Região para anunciar</label>
                     <input type="text" id="regiaoAnunciar" placeholder="Ex: São Paulo - SP / Brasil">
+                </div>
+
+                <div class="field">
+                    <label>Endereço completo</label>
+                    <input type="text" id="enderecoCompleto" placeholder="Rua, número, bairro, cidade - UF">
+                </div>
+
+                <div class="field">
+                    <label>CEP (no formato 99999-999)</label>
+                    <input type="text" id="cep" placeholder="99999-999" maxlength="9">
                 </div>
             </div>
 

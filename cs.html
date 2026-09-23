@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CRM Pro - CS</title>
+    <title>CRM Pro - Customer Success (CS)</title>
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/imask"></script>
     <style>
-        .select-material {
+        .select-status-cs {
             padding: 5px 8px;
             border-radius: 6px;
             font-weight: 600;
@@ -17,20 +17,20 @@
             cursor: pointer;
             transition: var(--transition);
         }
-        .select-material.entregue {
-            background-color: rgba(0, 122, 255, 0.2);
-            color: #3399ff;
-            border-color: #007aff;
-        }
-        .select-material.revisao {
+        .select-status-cs.agendado {
             background-color: rgba(255, 204, 0, 0.2);
             color: #ffcc00;
             border-color: #ffcc00;
         }
-        .select-material.aprovado {
+        .select-status-cs.realizado {
             background-color: rgba(0, 255, 136, 0.2);
             color: var(--accent);
             border-color: var(--accent);
+        }
+        .select-status-cs.cancelado {
+            background-color: rgba(255, 68, 68, 0.2);
+            color: #ff4444;
+            border-color: #ff4444;
         }
         .input-textarea-cs {
             width: 100%;
@@ -78,17 +78,18 @@
             <li><a href="#" class="active">CS</a></li>
             <li><a href="trafego.html">Gestão de Tráfego</a></li>
             <li><a href="midias.html">Mídias</a></li>
+            <li><a href="webdesigner.html">Web designer</a></li>
             <li><a href="bi.html">B.I</a></li>
         </ul>
     </div>
     <div style="padding: 15px;">
-        <button id="btnSair" class="btn-logout"> Sair</button>
+        <button id="btnSair" class="btn-logout">Sair</button>
     </div>
 </nav>
 
 <main class="main-content">
     <div class="container">
-        <h2>🤝 Customer Success (CS)</h2>
+        <h2>🎧 Customer Success (CS)</h2>
         
         <div class="filter-container">
             <div class="field">
@@ -124,21 +125,22 @@
             <table>
                 <thead>
                     <tr>
-                        <th>Data Venda</th>
+                        <th>Data da venda</th>
+                        <th>Já investiu em tráfego</th>
                         <th>Vendedor</th>
                         <th>Cliente</th>
+                        <th>Nome do escritório</th>
                         <th>Telefone</th>
-                        <th>Data Onboarding</th>
+                        <th>Telefone de campanha</th>
+                        <th>Data de onboarding</th>
                         <th>Horário</th>
-                        <th>On. Aconteceu?</th>
-                        <th>Squad</th>
-                        <th>Área de Atuação</th>
-                        <th>Site/Landing Page</th>
-                        <th>Plataforma de Início</th>
-                        <th>Região para Anunciar</th>
-                        <th>Material</th>
-                        <th style="min-width: 160px;">Teses</th>
-                        <th style="min-width: 160px;">Observações</th>
+                        <th>Instagram</th>
+                        <th>Endereço completo</th>
+                        <th>CEP</th>
+                        <th>On. aconteceu</th>
+                        <th>Plano</th>
+                        <th>Repag. do Instagram</th>
+                        <th>Anotações de Onboarding</th>
                     </tr>
                 </thead>
                 <tbody id="listaCSCorpo"></tbody>
