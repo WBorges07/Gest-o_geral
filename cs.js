@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, onSnapshot, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { botaoOlhoHTML, ativarOlhos } from "./detalhes.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyARsHedCxsS4n3s6WxEopEDXzQPWAjrhp8",
@@ -36,6 +37,9 @@ const filtroMesCS = document.getElementById('filtroMesCS');
 const filtroAnoCS = document.getElementById('filtroAnoCS');
 
 let vendasCSCache = [];
+
+// Ícone de olho -> abre a janela flutuante com todas as informações do cliente
+ativarOlhos(listaCSCorpo, (id) => vendasCSCache.find(v => v.id === id));
 
 const aplicarClasseStatusCS = (selectEl, valor) => {
     selectEl.classList.remove('agendado', 'realizado', 'cancelado');
@@ -80,6 +84,7 @@ const renderizarTabelaCS = () => {
         const anotacoesCS = venda.anotacoesCS || "";
 
         tr.innerHTML = `
+            <td>${botaoOlhoHTML(venda.id)}</td>
             <td>${venda.dataPgtoInicial || '-'}</td>
             <td>
                 <select class="select-jainvestiu-cs" data-id="${venda.id}" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">

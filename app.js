@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { botaoOlhoHTML, ativarOlhos } from "./detalhes.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyARsHedCxsS4n3s6WxEopEDXzQPWAjrhp8",
@@ -74,6 +75,9 @@ const filtroMes = document.getElementById('filtroMes');
 const filtroAno = document.getElementById('filtroAno');
 
 let vendasCache = [];
+
+// Ícone de olho -> abre a janela flutuante com todas as informações do cliente
+ativarOlhos(listaVendasCorpo, (id) => vendasCache.find(v => v.id === id));
 
 vendaForm.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -155,6 +159,7 @@ const renderizarTabela = () => {
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
+            <td>${botaoOlhoHTML(venda.id)}</td>
             <td>${venda.dataPgtoInicial || '-'}</td>
             <td>${venda.nomeCliente || '-'}</td>
             <td>${venda.vendedor || '-'}</td>

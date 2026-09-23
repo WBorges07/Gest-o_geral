@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, onSnapshot, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { botaoOlhoHTML, ativarOlhos } from "./detalhes.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyARsHedCxsS4n3s6WxEopEDXzQPWAjrhp8",
@@ -36,6 +37,9 @@ const filtroMesTrafego = document.getElementById('filtroMesTrafego');
 const filtroAnoTrafego = document.getElementById('filtroAnoTrafego');
 
 let vendasTrafegoCache = [];
+
+// Ícone de olho -> abre a janela flutuante com todas as informações do cliente
+ativarOlhos(listaTrafegoCorpo, (id) => vendasTrafegoCache.find(v => v.id === id));
 
 const aplicarClasseSatisfacao = (selectEl, valor) => {
     selectEl.classList.remove('satisfeito', 'alerta', 'insatisfeito');
@@ -85,6 +89,7 @@ const renderizarTabelaTrafego = () => {
         const observacoesTrafego = venda.observacoesTrafego || "";
 
         tr.innerHTML = `
+            <td>${botaoOlhoHTML(venda.id)}</td>
             <td>${venda.dataPgtoInicial || '-'}</td>
             <td>${venda.vendedor || '-'}</td>
             <td>${venda.nomeCliente || '-'}</td>
