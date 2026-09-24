@@ -48,6 +48,33 @@ const aplicarClasseSatisfacao = (selectEl, valor) => {
     if (valor === "Insatisfeito") selectEl.classList.add('insatisfeito');
 };
 
+const aplicarClasseCampanha = (selectEl, valor) => {
+    selectEl.classList.remove('rodando', 'pausada', 'encerrada');
+    if (valor === "Rodando") selectEl.classList.add('rodando');
+    if (valor === "Pausada") selectEl.classList.add('pausada');
+    if (valor === "Encerrada") selectEl.classList.add('encerrada');
+};
+
+const aplicarClasseTendencia = (selectEl, valor) => {
+    selectEl.classList.remove('subir', 'manter', 'descer');
+    if (valor === "Subir") selectEl.classList.add('subir');
+    if (valor === "Manter") selectEl.classList.add('manter');
+    if (valor === "Descer") selectEl.classList.add('descer');
+};
+
+// Máscara de moeda (mesmo padrão usado no cadastro de vendas)
+const maskMoedaOptions = {
+    mask: 'R$ num',
+    blocks: {
+        num: {
+            mask: Number,
+            thousandsSeparator: '.',
+            radix: ',',
+            mapToRadix: ['.']
+        }
+    }
+};
+
 const renderizarTabelaTrafego = () => {
     const selVendedor = filtroVendedorTrafego.value;
     const selMes = filtroMesTrafego.value;
@@ -59,7 +86,7 @@ const renderizarTabelaTrafego = () => {
         // Só aparece após "On. aconteceu?" = "Sim" na aba CS
         if (venda.onboardingAconteceu !== "Sim") return false;
 
-        let matchVendedor = (selVendedor === "todos" || venda.vendedor === selVendedor);
+        let matchVendedor = (selVendedor === "todos" || venda.vendedor === selVendedor || (venda.vendedor || "").startsWith(selVendedor));
         let matchMes = (selMes === "todos" || venda.pagamentoMes === selMes);
 
         let matchAno = true;
@@ -78,7 +105,11 @@ const renderizarTabelaTrafego = () => {
 
         const nomeEscritorio = venda.nomeEscritorio || "";
         const telefoneCampanha = venda.telefoneCampanha || "";
-        const squad = venda.squad || "";
+        const campanha = venda.campanhaStatus || "";
+        const cpl = venda.cpl || "";
+        const tendencia = venda.tendencia || "";
+        const orcamento = venda.orcamento || "";
+        const saldoRestante = venda.saldoRestante || "";
         const enderecoCompleto = venda.enderecoCompleto || "-";
         const cep = venda.cep || "-";
         const instagram = venda.instagram || "";
@@ -101,11 +132,36 @@ const renderizarTabelaTrafego = () => {
                 <input type="text" class="input-tel-campanha" data-id="${venda.id}" value="${telefoneCampanha}" placeholder="(00) 00000-0000" style="width: 130px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
             </td>
             <td>
-                <select class="select-squad-trafego" data-id="${venda.id}" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
-                    <option value="" ${squad === "" ? "selected" : ""}>Selecione...</option>
-                    <option value="Squad Black Mamba" ${squad === "Squad Black Mamba" ? "selected" : ""}>Squad Black Mamba</option>
-                    <option value="Squad Titans" ${squad === "Squad Titans" ? "selected" : ""}>Squad Titans</option>
+                <select class="select-campanha" data-id="${venda.id}">
+                    <option value="" ${campanha === "" ? "selected" : ""}>Selecione...</option>
+                    <option value="Rodando" ${campanha === "Rodando" ? "selected" : ""}>Rodando</option>
+                    <option value="Pausada" ${campanha === "Pausada" ? "selected" : ""}>Pausada</option>
+                    <option value="Encerrada" ${campanha === "Encerrada" ? "selected" : ""}>Encerrada</option>
                 </select>
+            </td>
+            <td>
+                <select class="select-satisfacao" data-id="${venda.id}">
+                    <option value="Satisfeito" ${satisfacao === "Satisfeito" ? "selected" : ""}>Satisfeito</option>
+                    <option value="Alerta" ${satisfacao === "Alerta" ? "selected" : ""}>Alerta</option>
+                    <option value="Insatisfeito" ${satisfacao === "Insatisfeito" ? "selected" : ""}>Insatisfeito</option>
+                </select>
+            </td>
+            <td>
+                <input type="text" class="input-moeda-trafego" data-id="${venda.id}" data-campo="cpl" value="${cpl}" placeholder="R$ 0,00">
+            </td>
+            <td>
+                <select class="select-tendencia" data-id="${venda.id}">
+                    <option value="" ${tendencia === "" ? "selected" : ""}>Selecione...</option>
+                    <option value="Subir" ${tendencia === "Subir" ? "selected" : ""}>↑ Subir</option>
+                    <option value="Manter" ${tendencia === "Manter" ? "selected" : ""}>→ Manter</option>
+                    <option value="Descer" ${tendencia === "Descer" ? "selected" : ""}>↓ Descer</option>
+                </select>
+            </td>
+            <td>
+                <input type="text" class="input-moeda-trafego" data-id="${venda.id}" data-campo="orcamento" value="${orcamento}" placeholder="R$ 0,00">
+            </td>
+            <td>
+                <input type="text" class="input-moeda-trafego" data-id="${venda.id}" data-campo="saldoRestante" value="${saldoRestante}" placeholder="R$ 0,00">
             </td>
             <td>${enderecoCompleto}</td>
             <td>${cep}</td>
@@ -124,13 +180,6 @@ const renderizarTabelaTrafego = () => {
             </td>
             <td>${venda.investimento || '-'}</td>
             <td>${venda.plano || '-'}</td>
-            <td>
-                <select class="select-satisfacao" data-id="${venda.id}">
-                    <option value="Satisfeito" ${satisfacao === "Satisfeito" ? "selected" : ""}>Satisfeito</option>
-                    <option value="Alerta" ${satisfacao === "Alerta" ? "selected" : ""}>Alerta</option>
-                    <option value="Insatisfeito" ${satisfacao === "Insatisfeito" ? "selected" : ""}>Insatisfeito</option>
-                </select>
-            </td>
             <td>
                 <textarea class="input-textarea-trafego input-link-gerenciador" data-id="${venda.id}" placeholder="Cole o link aqui...">${linkGerenciador}</textarea>
             </td>
@@ -160,11 +209,34 @@ const renderizarTabelaTrafego = () => {
         });
     });
 
-    document.querySelectorAll('.select-squad-trafego').forEach(select => {
+    document.querySelectorAll('.select-campanha').forEach(select => {
+        aplicarClasseCampanha(select, select.value);
         select.addEventListener('change', async (e) => {
             const id = e.target.getAttribute('data-id');
             const val = e.target.value;
-            await updateDoc(doc(db, "vendas", id), { squad: val });
+            aplicarClasseCampanha(e.target, val);
+            await updateDoc(doc(db, "vendas", id), { campanhaStatus: val });
+        });
+    });
+
+    document.querySelectorAll('.select-tendencia').forEach(select => {
+        aplicarClasseTendencia(select, select.value);
+        select.addEventListener('change', async (e) => {
+            const id = e.target.getAttribute('data-id');
+            const val = e.target.value;
+            aplicarClasseTendencia(e.target, val);
+            await updateDoc(doc(db, "vendas", id), { tendencia: val });
+        });
+    });
+
+    // CPL, Orçamento e Saldo restante (valores em R$)
+    document.querySelectorAll('.input-moeda-trafego').forEach(input => {
+        if (window.IMask) IMask(input, maskMoedaOptions);
+        input.addEventListener('change', async (e) => {
+            const id = e.target.getAttribute('data-id');
+            const campo = e.target.getAttribute('data-campo'); // cpl | orcamento | saldoRestante
+            const val = e.target.value;
+            await updateDoc(doc(db, "vendas", id), { [campo]: val });
         });
     });
 

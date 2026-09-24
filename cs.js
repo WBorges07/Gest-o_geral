@@ -55,7 +55,7 @@ const renderizarTabelaCS = () => {
     listaCSCorpo.innerHTML = "";
 
     const filtrados = vendasCSCache.filter(venda => {
-        let matchVendedor = (selVendedor === "todos" || venda.vendedor === selVendedor);
+        let matchVendedor = (selVendedor === "todos" || venda.vendedor === selVendedor || (venda.vendedor || "").startsWith(selVendedor));
         let matchMes = (selMes === "todos" || venda.pagamentoMes === selMes);
 
         let matchAno = true;
@@ -77,6 +77,7 @@ const renderizarTabelaCS = () => {
         const telefoneCampanha = venda.telefoneCampanha || "";
         const dataOnboarding = venda.dataOnboarding || "";
         const horarioOnboarding = venda.horarioOnboarding || "";
+        const squad = venda.squad || "";
         const instagram = venda.instagram || "";
         const enderecoCompleto = venda.enderecoCompleto || "-";
         const cep = venda.cep || "-";
@@ -106,6 +107,13 @@ const renderizarTabelaCS = () => {
             </td>
             <td>
                 <input type="time" class="input-horario-onboarding" data-id="${venda.id}" value="${horarioOnboarding}" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+            </td>
+            <td>
+                <select class="select-squad-cs" data-id="${venda.id}" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+                    <option value="" ${squad === "" ? "selected" : ""}>Selecione...</option>
+                    <option value="Squad Black Mamba" ${squad === "Squad Black Mamba" ? "selected" : ""}>Squad Black Mamba</option>
+                    <option value="Squad Titans" ${squad === "Squad Titans" ? "selected" : ""}>Squad Titans</option>
+                </select>
             </td>
             <td>
                 <input type="text" class="input-instagram-cs" data-id="${venda.id}" value="${instagram}" placeholder="@usuario" style="width: 110px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
@@ -167,6 +175,14 @@ const renderizarTabelaCS = () => {
             const id = e.target.getAttribute('data-id');
             const val = e.target.value;
             await updateDoc(doc(db, "vendas", id), { horarioOnboarding: val });
+        });
+    });
+
+    document.querySelectorAll('.select-squad-cs').forEach(select => {
+        select.addEventListener('change', async (e) => {
+            const id = e.target.getAttribute('data-id');
+            const val = e.target.value;
+            await updateDoc(doc(db, "vendas", id), { squad: val });
         });
     });
 

@@ -73,40 +73,49 @@ const listaVendasCorpo = document.getElementById('listaVendasCorpo');
 const filtroVendedor = document.getElementById('filtroVendedor');
 const filtroMes = document.getElementById('filtroMes');
 const filtroAno = document.getElementById('filtroAno');
+const btnSalvar = document.getElementById('btnSalvar');
 
 let vendasCache = [];
 
 // Ícone de olho -> abre a janela flutuante com todas as informações do cliente
 ativarOlhos(listaVendasCorpo, (id) => vendasCache.find(v => v.id === id));
 
+// Lê o valor de um campo do formulário sem quebrar caso o campo não exista
+const valorCampo = (id) => {
+    const el = document.getElementById(id);
+    return el ? el.value : "";
+};
+
 vendaForm.addEventListener('submit', async (e) => {
     e.preventDefault();
 
     const novaVenda = {
-        vendedor: document.getElementById('vendedor').value,
-        nomeCliente: document.getElementById('nomeCliente').value,
-        telefone: document.getElementById('telefone').value,
-        plano: document.getElementById('plano').value,
-        repagInstagram: document.getElementById('repagInstagram').value,
-        vigencia: document.getElementById('vigencia').value,
-        area: document.getElementById('area').value,
-        perfil: document.getElementById('perfil').value,
-        pagamentoMes: document.getElementById('pagamentoMes').value,
-        tipoCampanha: document.getElementById('tipoCampanha').value,
-        investimento: document.getElementById('investimento').value,
-        mensalidadePlano: document.getElementById('mensalidadePlano').value,
-        pagamentoInicial: document.getElementById('pagamentoInicial').value,
-        dataPgtoInicial: document.getElementById('dataPgtoInicial').value,
-        formaPagamento: document.getElementById('formaPagamento').value,
-        instagram: document.getElementById('instagram').value,
-        jaInvestia: document.getElementById('jaInvestia').value,
-        siteLandingPage: document.getElementById('siteLandingPage').value,
-        plataformaInicio: document.getElementById('plataformaInicio').value,
-        regiaoAnunciar: document.getElementById('regiaoAnunciar').value,
-        enderecoCompleto: document.getElementById('enderecoCompleto').value,
-        cep: document.getElementById('cep').value,
+        vendedor: valorCampo('vendedor'),
+        nomeCliente: valorCampo('nomeCliente'),
+        telefone: valorCampo('telefone'),
+        plano: valorCampo('plano'),
+        repagInstagram: valorCampo('repagInstagram'),
+        vigencia: valorCampo('vigencia'),
+        area: valorCampo('area'),
+        perfil: valorCampo('perfil'),
+        pagamentoMes: valorCampo('pagamentoMes'),
+        tipoCampanha: valorCampo('tipoCampanha'),
+        investimento: valorCampo('investimento'),
+        mensalidadePlano: valorCampo('mensalidadePlano'),
+        pagamentoInicial: valorCampo('pagamentoInicial'),
+        dataPgtoInicial: valorCampo('dataPgtoInicial'),
+        formaPagamento: valorCampo('formaPagamento'),
+        instagram: valorCampo('instagram'),
+        jaInvestia: valorCampo('jaInvestia'),
+        siteLandingPage: valorCampo('siteLandingPage'),
+        plataformaInicio: valorCampo('plataformaInicio'),
+        regiaoAnunciar: valorCampo('regiaoAnunciar'),
+        enderecoCompleto: valorCampo('enderecoCompleto'),
+        cep: valorCampo('cep'),
         dataCadastro: new Date().toISOString()
     };
+
+    if (btnSalvar) btnSalvar.disabled = true;
 
     try {
         await addDoc(collection(db, "vendas"), novaVenda);
@@ -114,7 +123,10 @@ vendaForm.addEventListener('submit', async (e) => {
         vendaForm.reset();
     } catch (error) {
         console.error("Erro ao salvar venda: ", error);
-        alert("Erro ao salvar a venda.");
+        // Mostra o motivo real (ex.: permission-denied = regras do Firestore bloqueando)
+        alert("Erro ao salvar a venda.\n\nMotivo: " + (error.code || error.message || error));
+    } finally {
+        if (btnSalvar) btnSalvar.disabled = false;
     }
 });
 
@@ -139,7 +151,12 @@ const renderizarTabela = () => {
     let totalEnt = 0;
 
     const filtrados = vendasCache.filter(venda => {
-        let matchVendedor = (selVendedor === "todos" || venda.vendedor === selVendedor);
+        // "Victor Gestor" (cadastro) também é encontrado ao filtrar por "Victor"
+        let matchVendedor = (
+            selVendedor === "todos" ||
+            venda.vendedor === selVendedor ||
+            (venda.vendedor || "").startsWith(selVendedor)
+        );
         let matchMes = (selMes === "todos" || venda.pagamentoMes === selMes);
 
         let matchAno = true;
@@ -185,6 +202,7 @@ const renderizarTabela = () => {
                     await deleteDoc(doc(db, "vendas", id));
                 } catch (err) {
                     console.error("Erro ao deletar:", err);
+                    alert("Erro ao excluir a venda.\n\nMotivo: " + (err.code || err.message || err));
                 }
             }
         });
@@ -195,11 +213,20 @@ filtroVendedor.addEventListener('change', renderizarTabela);
 filtroMes.addEventListener('change', renderizarTabela);
 filtroAno.addEventListener('change', renderizarTabela);
 
+let avisouErroListagem = false;
+
 const q = query(collection(db, "vendas"), orderBy("dataCadastro", "desc"));
 onSnapshot(q, (snapshot) => {
     vendasCache = [];
-    snapshot.forEach((doc) => {
-        vendasCache.push({ id: doc.id, ...doc.data() });
+    snapshot.forEach((docSnap) => {
+        vendasCache.push({ id: docSnap.id, ...docSnap.data() });
     });
     renderizarTabela();
+}, (error) => {
+    // Sem isso, se o Firestore recusar a leitura a lista simplesmente fica vazia, sem aviso
+    console.error("Erro ao carregar vendas:", error);
+    if (!avisouErroListagem) {
+        avisouErroListagem = true;
+        alert("Não foi possível carregar a lista de vendas.\n\nMotivo: " + (error.code || error.message || error));
+    }
 });

@@ -69,7 +69,7 @@ const renderizarFinanceiro = () => {
         const valorEntrada = d.pagamentoInicial || d.valorEntrada || "R$ 0,00";
         const formaPgto = d.formaPagamento || d.formaEntrada || "-";
 
-        const vBate = vFiltro === "todos" || d.vendedor === vFiltro;
+        const vBate = vFiltro === "todos" || d.vendedor === vFiltro || (d.vendedor || "").startsWith(vFiltro);
         const mBate = mFiltro === "todos" || mesReferencia === mFiltro;
         const aBate = aFiltro === "todos" || anoVenda === aFiltro;
 

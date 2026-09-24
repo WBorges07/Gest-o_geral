@@ -8,35 +8,53 @@
     <script src="theme.js"></script>
     <script src="https://unpkg.com/imask"></script>
     <style>
-        .select-satisfacao {
-            padding: 5px 8px;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 0.8rem;
+        /* Status da campanha (Rodando / Pausada / Encerrada) */
+        .select-campanha {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-family: inherit;
+            font-weight: 700;
+            font-size: 0.76rem;
             border: 1px solid var(--border);
+            background: var(--input);
+            color: var(--text);
             outline: none;
             cursor: pointer;
             transition: var(--transition);
         }
-        .select-satisfacao.satisfeito {
+        .select-campanha.rodando {
             background-color: rgba(0, 255, 136, 0.2);
             color: var(--accent);
             border-color: var(--accent);
         }
-        .select-satisfacao.alerta {
+        .select-campanha.pausada {
             background-color: rgba(255, 204, 0, 0.2);
             color: #ffcc00;
             border-color: #ffcc00;
         }
-        .select-satisfacao.insatisfeito {
+        .select-campanha.encerrada {
             background-color: rgba(255, 68, 68, 0.2);
             color: #ff4444;
             border-color: #ff4444;
         }
+
+        /* Campos de moeda (CPL, Orçamento, Saldo restante) */
+        .input-moeda-trafego {
+            width: 110px;
+            padding: 6px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--input);
+            color: var(--text);
+            font-size: 0.88rem;
+            outline: none;
+        }
+
+        /* Textareas (Link do gerenciador e Observações) */
         .input-textarea-trafego {
             width: 100%;
-            min-width: 150px;
-            max-width: 250px;
+            min-width: 170px;
+            max-width: 260px;
             min-height: 42px;
             padding: 5px 8px;
             border-radius: 6px;
@@ -44,9 +62,11 @@
             background: var(--input);
             color: var(--text);
             font-size: 0.88rem;
+            font-family: inherit;
             resize: vertical;
             box-sizing: border-box;
         }
+
         .btn-logout {
             margin-top: auto;
             background: rgba(255, 68, 68, 0.15);
@@ -79,6 +99,7 @@
             <li><a href="cs.html">CS</a></li>
             <li><a href="#" class="active">Gestão de Tráfego</a></li>
             <li><a href="midias.html">Mídias</a></li>
+            <li><a href="webdesigner.html">Web designer</a></li>
             <li><a href="bi.html">B.I</a></li>
         </ul>
     </div>
@@ -90,7 +111,7 @@
 <main class="main-content">
     <div class="container">
         <h2>🚦 Gestão de Tráfego</h2>
-        
+
         <div class="filter-container">
             <div class="field">
                 <label>Vendedor</label>
@@ -98,6 +119,7 @@
                     <option value="todos">Todos</option>
                     <option>Ronny</option><option>Névio</option><option>Marysol</option>
                     <option>Victor</option><option>Bianca</option><option>Wagner</option>
+                    <option>Christian</option>
                 </select>
             </div>
             <div class="field">
@@ -126,24 +148,28 @@
                 <thead>
                     <tr>
                         <th style="width: 50px;">Ver</th>
-                        <th>Data Venda</th>
+                        <th>Data da venda</th>
                         <th>Vendedor</th>
                         <th>Cliente</th>
                         <th>Nome do escritório</th>
                         <th>Telefone</th>
                         <th>Telefone de campanha</th>
-                        <th>Squad</th>
+                        <th>Campanha</th>
+                        <th>Satisfação</th>
+                        <th>CPL</th>
+                        <th>Tendência</th>
+                        <th>Orçamento</th>
+                        <th>Saldo restante</th>
                         <th>Endereço completo</th>
                         <th>CEP</th>
                         <th>Instagram</th>
                         <th>Repag. do Instagram</th>
                         <th>Gestor de tráfego</th>
-                        <th>Já investiu em tráfego?</th>
-                        <th>Investimento mensal</th>
+                        <th>Já investiu em tráfego</th>
+                        <th>Investimento</th>
                         <th>Plano</th>
-                        <th>Grau de satisfação</th>
-                        <th style="min-width: 160px;">Link do Gerenciador / Conta</th>
-                        <th style="min-width: 160px;">Observações</th>
+                        <th>Link do gerenciador / conta</th>
+                        <th>Observações</th>
                     </tr>
                 </thead>
                 <tbody id="listaTrafegoCorpo"></tbody>

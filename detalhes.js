@@ -200,7 +200,12 @@ const SECOES = [
         campos: [
             ['Squad', 'squad'],
             ['Gestor de tráfego', 'gestorTrafego'],
-            ['Grau de satisfação', 'satisfacao'],
+            ['Campanha', 'campanhaStatus'],
+            ['Satisfação', 'satisfacao'],
+            ['CPL', 'cpl'],
+            ['Tendência', 'tendencia'],
+            ['Orçamento', 'orcamento'],
+            ['Saldo restante', 'saldoRestante'],
             ['Link do gerenciador / conta', 'linkGerenciador', 'link'],
             ['Observações de tráfego', 'observacoesTrafego', 'texto']
         ]
