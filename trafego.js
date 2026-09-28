@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, onSnapshot, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { escapeHTML, docsOrdenados, renderAdiavel } from "./util.js";
 import { botaoOlhoHTML, ativarOlhos } from "./detalhes.js";
 
 const firebaseConfig = {
@@ -121,18 +122,18 @@ const renderizarTabelaTrafego = () => {
 
         tr.innerHTML = `
             <td>${botaoOlhoHTML(venda.id)}</td>
-            <td>${venda.dataPgtoInicial || '-'}</td>
-            <td>${venda.vendedor || '-'}</td>
-            <td>${venda.nomeCliente || '-'}</td>
+            <td>${escapeHTML(venda.dataPgtoInicial || '-')}</td>
+            <td>${escapeHTML(venda.vendedor || '-')}</td>
+            <td>${escapeHTML(venda.nomeCliente || '-')}</td>
             <td>
-                <input type="text" class="input-escritorio-trafego" data-id="${venda.id}" value="${nomeEscritorio}" placeholder="Nome do escritório" style="width: 140px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+                <input type="text" class="input-escritorio-trafego" data-id="${escapeHTML(venda.id)}" value="${escapeHTML(nomeEscritorio)}" placeholder="Nome do escritório" style="width: 140px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
             </td>
-            <td>${venda.telefone || '-'}</td>
+            <td>${escapeHTML(venda.telefone || '-')}</td>
             <td>
-                <input type="text" class="input-tel-campanha" data-id="${venda.id}" value="${telefoneCampanha}" placeholder="(00) 00000-0000" style="width: 130px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+                <input type="text" class="input-tel-campanha" data-id="${escapeHTML(venda.id)}" value="${escapeHTML(telefoneCampanha)}" placeholder="(00) 00000-0000" style="width: 130px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
             </td>
             <td>
-                <select class="select-campanha" data-id="${venda.id}">
+                <select class="select-campanha" data-id="${escapeHTML(venda.id)}">
                     <option value="" ${campanha === "" ? "selected" : ""}>Selecione...</option>
                     <option value="Rodando" ${campanha === "Rodando" ? "selected" : ""}>Rodando</option>
                     <option value="Pausada" ${campanha === "Pausada" ? "selected" : ""}>Pausada</option>
@@ -140,17 +141,17 @@ const renderizarTabelaTrafego = () => {
                 </select>
             </td>
             <td>
-                <select class="select-satisfacao" data-id="${venda.id}">
+                <select class="select-satisfacao" data-id="${escapeHTML(venda.id)}">
                     <option value="Satisfeito" ${satisfacao === "Satisfeito" ? "selected" : ""}>Satisfeito</option>
                     <option value="Alerta" ${satisfacao === "Alerta" ? "selected" : ""}>Alerta</option>
                     <option value="Insatisfeito" ${satisfacao === "Insatisfeito" ? "selected" : ""}>Insatisfeito</option>
                 </select>
             </td>
             <td>
-                <input type="text" class="input-moeda-trafego" data-id="${venda.id}" data-campo="cpl" value="${cpl}" placeholder="R$ 0,00">
+                <input type="text" class="input-moeda-trafego" data-id="${escapeHTML(venda.id)}" data-campo="cpl" value="${escapeHTML(cpl)}" placeholder="R$ 0,00">
             </td>
             <td>
-                <select class="select-tendencia" data-id="${venda.id}">
+                <select class="select-tendencia" data-id="${escapeHTML(venda.id)}">
                     <option value="" ${tendencia === "" ? "selected" : ""}>Selecione...</option>
                     <option value="Subir" ${tendencia === "Subir" ? "selected" : ""}>↑ Subir</option>
                     <option value="Manter" ${tendencia === "Manter" ? "selected" : ""}>→ Manter</option>
@@ -158,33 +159,33 @@ const renderizarTabelaTrafego = () => {
                 </select>
             </td>
             <td>
-                <input type="text" class="input-moeda-trafego" data-id="${venda.id}" data-campo="orcamento" value="${orcamento}" placeholder="R$ 0,00">
+                <input type="text" class="input-moeda-trafego" data-id="${escapeHTML(venda.id)}" data-campo="orcamento" value="${escapeHTML(orcamento)}" placeholder="R$ 0,00">
             </td>
             <td>
-                <input type="text" class="input-moeda-trafego" data-id="${venda.id}" data-campo="saldoRestante" value="${saldoRestante}" placeholder="R$ 0,00">
+                <input type="text" class="input-moeda-trafego" data-id="${escapeHTML(venda.id)}" data-campo="saldoRestante" value="${escapeHTML(saldoRestante)}" placeholder="R$ 0,00">
             </td>
-            <td>${enderecoCompleto}</td>
-            <td>${cep}</td>
+            <td>${escapeHTML(enderecoCompleto)}</td>
+            <td>${escapeHTML(cep)}</td>
             <td>
-                <input type="text" class="input-instagram-trafego" data-id="${venda.id}" value="${instagram}" placeholder="@usuario" style="width: 110px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+                <input type="text" class="input-instagram-trafego" data-id="${escapeHTML(venda.id)}" value="${escapeHTML(instagram)}" placeholder="@usuario" style="width: 110px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
             </td>
-            <td>${venda.repagInstagram || '-'}</td>
+            <td>${escapeHTML(venda.repagInstagram || '-')}</td>
             <td>
-                <input type="text" class="input-gestor-trafego" data-id="${venda.id}" value="${gestorTrafego}" placeholder="Nome do gestor" style="width: 120px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+                <input type="text" class="input-gestor-trafego" data-id="${escapeHTML(venda.id)}" value="${escapeHTML(gestorTrafego)}" placeholder="Nome do gestor" style="width: 120px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
             </td>
             <td>
-                <select class="select-jainvestiu-trafego" data-id="${venda.id}" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+                <select class="select-jainvestiu-trafego" data-id="${escapeHTML(venda.id)}" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
                     <option value="Sim" ${jaInvestia === "Sim" ? "selected" : ""}>Sim</option>
                     <option value="Não" ${jaInvestia === "Não" ? "selected" : ""}>Não</option>
                 </select>
             </td>
-            <td>${venda.investimento || '-'}</td>
-            <td>${venda.plano || '-'}</td>
+            <td>${escapeHTML(venda.investimento || '-')}</td>
+            <td>${escapeHTML(venda.plano || '-')}</td>
             <td>
-                <textarea class="input-textarea-trafego input-link-gerenciador" data-id="${venda.id}" placeholder="Cole o link aqui...">${linkGerenciador}</textarea>
+                <textarea class="input-textarea-trafego input-link-gerenciador" data-id="${escapeHTML(venda.id)}" placeholder="Cole o link aqui...">${escapeHTML(linkGerenciador)}</textarea>
             </td>
             <td>
-                <textarea class="input-textarea-trafego input-obs-trafego" data-id="${venda.id}" placeholder="Digitar observações...">${observacoesTrafego}</textarea>
+                <textarea class="input-textarea-trafego input-obs-trafego" data-id="${escapeHTML(venda.id)}" placeholder="Digitar observações...">${escapeHTML(observacoesTrafego)}</textarea>
             </td>
         `;
 
@@ -295,11 +296,8 @@ filtroVendedorTrafego.addEventListener('change', renderizarTabelaTrafego);
 filtroMesTrafego.addEventListener('change', renderizarTabelaTrafego);
 filtroAnoTrafego.addEventListener('change', renderizarTabelaTrafego);
 
-const q = query(collection(db, "vendas"), orderBy("dataCadastro", "desc"));
-onSnapshot(q, (snapshot) => {
-    vendasTrafegoCache = [];
-    snapshot.forEach((doc) => {
-        vendasTrafegoCache.push({ id: doc.id, ...doc.data() });
-    });
-    renderizarTabelaTrafego();
+const renderSeguro = renderAdiavel(listaTrafegoCorpo, renderizarTabelaTrafego);
+onSnapshot(collection(db, "vendas"), (snapshot) => {
+    vendasTrafegoCache = docsOrdenados(snapshot);
+    renderSeguro();
 });

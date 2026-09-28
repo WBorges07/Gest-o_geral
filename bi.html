@@ -6,7 +6,7 @@
     <title>CRM Pro - Business Intelligence</title>
     <link rel="stylesheet" href="style.css">
     <script src="theme.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     <style>
         .bi-grid-cards {
             display: grid;
@@ -34,7 +34,7 @@
         }
         .charts-container {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(min(450px, 100%), 1fr));
             gap: 25px;
             margin-bottom: 30px;
         }
@@ -94,6 +94,13 @@
 <main class="main-content">
     <div class="container" style="max-width: 1400px;">
         <h2>📊 Business Intelligence & Indicadores</h2>
+
+        <div class="filter-container" style="margin-bottom: 20px;">
+            <div class="field">
+                <label>Ano</label>
+                <select id="filtroAnoBI"><option value="todos">Todos os anos</option></select>
+            </div>
+        </div>
 
         <!-- CARDS DE RESUMO EM NÚMEROS -->
         <div class="bi-grid-cards">

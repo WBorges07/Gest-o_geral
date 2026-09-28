@@ -11,10 +11,12 @@
 <style>
   /* ---------- Página de login: acender a luz para revelar o formulário ---------- */
 
-  html, body.login-page {
-    height: 100%;
+  html { height: 100%; }
+
+  body.login-page {
+    min-height: 100%;
     margin: 0;
-    overflow: hidden;
+    overflow-x: hidden; /* permite rolar na vertical em telas baixas */
   }
 
   body.login-page {
@@ -314,7 +316,7 @@
                 </div>
 
                 <div class="field" style="margin-bottom: 10px;">
-                    <label>Palavra-passe</label>
+                    <label>Senha</label>
                     <input type="password" id="senha" placeholder="••••••••" required>
                 </div>
 
@@ -347,7 +349,7 @@
 
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyARsHedCxsS4n3s6WxEopEDXzQPWAjrhp8",
@@ -360,6 +362,11 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+
+    // Quem já está logado vai direto para o painel
+    onAuthStateChanged(auth, (user) => {
+        if (user) window.location.href = "index.html";
+    });
 
     const loginForm = document.getElementById('loginForm');
     const errorMsg = document.getElementById('loginError');

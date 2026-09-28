@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const firebaseConfig = {
@@ -43,7 +43,34 @@ let dadosBICache = [];
 
 const ordemMeses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
-const renderizarDashboardBI = (dados) => {
+const selAnoBI = document.getElementById('filtroAnoBI');
+let anoInicializado = false;
+
+const anoDe = (d) => {
+    const p = (d.dataPgtoInicial || "").split('/');
+    return p.length === 3 ? p[2] : "";
+};
+
+// Mesmo padrão mostrado na aba Tráfego: quem já fez onboarding e ainda não foi avaliado aparece como "Satisfeito"
+const satisfacaoEfetiva = (d) => d.satisfacao || (d.onboardingAconteceu === "Sim" ? "Satisfeito" : "");
+
+const popularAnos = (dados) => {
+    const anos = [...new Set(dados.map(anoDe).filter(a => /^\d{4}$/.test(a)))].sort();
+    const atual = selAnoBI.value;
+    selAnoBI.innerHTML = '<option value="todos">Todos os anos</option>' + anos.map(a => `<option value="${a}">${a}</option>`).join('');
+    if (!anoInicializado) {
+        const anoCorrente = String(new Date().getFullYear());
+        selAnoBI.value = anos.includes(anoCorrente) ? anoCorrente : "todos";
+        anoInicializado = true;
+    } else {
+        selAnoBI.value = (atual === "todos" || anos.includes(atual)) ? atual : "todos";
+    }
+};
+
+const renderizarDashboardBI = (todos) => {
+    const anoSel = selAnoBI.value;
+    const dados = anoSel === "todos" ? todos : todos.filter(d => anoDe(d) === anoSel);
+
     // 1. Quantidade de Planos Fechados
     const contagemPlanos = {};
     const contagemVendedores = {};
@@ -60,7 +87,9 @@ const renderizarDashboardBI = (dados) => {
         }
         // Vendedores
         if (d.vendedor) {
-            contagemVendedores[d.vendedor] = (contagemVendedores[d.vendedor] || 0) + 1;
+            // "Victor Gestor" e "Victor" contam como a mesma pessoa
+            const nomeVendedor = d.vendedor.trim().split(' ')[0];
+            contagemVendedores[nomeVendedor] = (contagemVendedores[nomeVendedor] || 0) + 1;
         }
         // Mês
         if (d.pagamentoMes) {
@@ -68,7 +97,7 @@ const renderizarDashboardBI = (dados) => {
         }
         // Satisfação por Squad
         const squad = d.squad;
-        const sat = d.satisfacao;
+        const sat = satisfacaoEfetiva(d);
         if (squad && satisfacaoPorSquad[squad] && sat) {
             if (satisfacaoPorSquad[squad][sat] !== undefined) {
                 satisfacaoPorSquad[squad][sat]++;
@@ -89,9 +118,10 @@ const renderizarDashboardBI = (dados) => {
     let totalSatisfeito = 0;
     let totalComSat = 0;
     dados.forEach(d => {
-        if (d.satisfacao) {
+        const satD = satisfacaoEfetiva(d);
+        if (satD) {
             totalComSat++;
-            if (d.satisfacao === "Satisfeito") totalSatisfeito++;
+            if (satD === "Satisfeito") totalSatisfeito++;
         }
     });
     const percSat = totalComSat > 0 ? Math.round((totalSatisfeito / totalComSat) * 100) + "%" : "N/A";
@@ -199,11 +229,14 @@ const renderizarDashboardBI = (dados) => {
     });
 };
 
-onSnapshot(query(collection(db, "vendas"), orderBy("dataCadastro", "desc")), (snap) => {
-    const dados = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+onSnapshot(collection(db, "vendas"), (snap) => {
+    const dados = snap.docs.map(d => ({ id: d.id, ...d.data() }));
     dadosBICache = dados;
+    popularAnos(dados);
     renderizarDashboardBI(dados);
 });
+
+selAnoBI.addEventListener('change', () => renderizarDashboardBI(dadosBICache));
 
 // Redesenha os gráficos quando o tema é alternado
 window.addEventListener('temaAlterado', () => {

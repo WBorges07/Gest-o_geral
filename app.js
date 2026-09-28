@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { escapeHTML, docsOrdenados } from "./util.js";
 import { botaoOlhoHTML, ativarOlhos } from "./detalhes.js";
 
 const firebaseConfig = {
@@ -68,6 +69,15 @@ if (window.IMask) {
     if (cepInput) IMask(cepInput, { mask: '00000-000' });
 }
 
+// Valida se a data DD/MM/AAAA existe de verdade (a máscara aceita "99/99/2026")
+const dataValida = (txt) => {
+    const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(txt || "");
+    if (!m) return false;
+    const d = +m[1], mo = +m[2], a = +m[3];
+    const dt = new Date(a, mo - 1, d);
+    return dt.getFullYear() === a && dt.getMonth() === mo - 1 && dt.getDate() === d;
+};
+
 const vendaForm = document.getElementById('vendaForm');
 const listaVendasCorpo = document.getElementById('listaVendasCorpo');
 const filtroVendedor = document.getElementById('filtroVendedor');
@@ -88,6 +98,11 @@ const valorCampo = (id) => {
 
 vendaForm.addEventListener('submit', async (e) => {
     e.preventDefault();
+
+    if (!dataValida(valorCampo('dataPgtoInicial'))) {
+        alert("Data pgto inicial inválida. Use DD/MM/AAAA com uma data real.");
+        return;
+    }
 
     const novaVenda = {
         vendedor: valorCampo('vendedor'),
@@ -177,15 +192,15 @@ const renderizarTabela = () => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${botaoOlhoHTML(venda.id)}</td>
-            <td>${venda.dataPgtoInicial || '-'}</td>
-            <td>${venda.nomeCliente || '-'}</td>
-            <td>${venda.vendedor || '-'}</td>
-            <td>${venda.plano || '-'}</td>
-            <td>${venda.mensalidadePlano || '-'}</td>
-            <td>${venda.pagamentoInicial || '-'}</td>
-            <td>${venda.telefone || '-'}</td>
+            <td>${escapeHTML(venda.dataPgtoInicial || '-')}</td>
+            <td>${escapeHTML(venda.nomeCliente || '-')}</td>
+            <td>${escapeHTML(venda.vendedor || '-')}</td>
+            <td>${escapeHTML(venda.plano || '-')}</td>
+            <td>${escapeHTML(venda.mensalidadePlano || '-')}</td>
+            <td>${escapeHTML(venda.pagamentoInicial || '-')}</td>
+            <td>${escapeHTML(venda.telefone || '-')}</td>
             <td>
-                <button class="btn-deletar" data-id="${venda.id}" style="background-color: var(--danger, #e74c3c); color: #fff; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Excluir</button>
+                <button class="btn-deletar" data-id="${escapeHTML(venda.id)}" style="background-color: var(--danger, #e74c3c); color: #fff; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">Excluir</button>
             </td>
         `;
         listaVendasCorpo.appendChild(tr);
@@ -215,12 +230,8 @@ filtroAno.addEventListener('change', renderizarTabela);
 
 let avisouErroListagem = false;
 
-const q = query(collection(db, "vendas"), orderBy("dataCadastro", "desc"));
-onSnapshot(q, (snapshot) => {
-    vendasCache = [];
-    snapshot.forEach((docSnap) => {
-        vendasCache.push({ id: docSnap.id, ...docSnap.data() });
-    });
+onSnapshot(collection(db, "vendas"), (snapshot) => {
+    vendasCache = docsOrdenados(snapshot);
     renderizarTabela();
 }, (error) => {
     // Sem isso, se o Firestore recusar a leitura a lista simplesmente fica vazia, sem aviso

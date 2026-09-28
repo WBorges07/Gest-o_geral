@@ -1,6 +1,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, onSnapshot, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, doc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { getStorage, ref, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
+import { escapeHTML, urlSegura, docsOrdenados, renderAdiavel } from "./util.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyARsHedCxsS4n3s6WxEopEDXzQPWAjrhp8",
@@ -14,6 +16,7 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+const storage = getStorage(app);
 
 onAuthStateChanged(auth, (user) => {
     if (!user) {
@@ -31,6 +34,28 @@ if (btnSair) {
 }
 
 const listaMidiasCorpo = document.getElementById('listaMidiasCorpo');
+const fileInputGlobal = document.getElementById('fileInputGlobal');
+const TAMANHO_MAXIMO_MB = 50;
+let clienteAlvoUpload = null;
+let botaoAlvoUpload = null;
+
+// Mostra só o nome do arquivo (remove a URL longa do Firebase Storage); links antigos continuam como estavam
+const nomeArquivo = (arq) => {
+    try {
+        const u = new URL(arq);
+        if (u.hostname.includes('firebasestorage')) {
+            const caminho = decodeURIComponent((u.pathname.split('/o/')[1] || ''));
+            const nome = caminho.split('/').pop().replace(/^\d+_/, '');
+            if (nome) return nome;
+        }
+    } catch (e) { /* não é URL válida: mostra como veio */ }
+    return arq;
+};
+
+const ehArquivoDoStorage = (arq) => {
+    try { return new URL(arq).hostname.includes('firebasestorage'); }
+    catch (e) { return false; }
+};
 const tabBtns = document.querySelectorAll('.tab-btn');
 
 let vendasMidiasCache = [];
@@ -65,31 +90,30 @@ const renderizarTabelaMidias = () => {
         if (arquivos.length > 0) {
             listaArquivosHTML = `<ul class="lista-arquivos">`;
             arquivos.forEach((arq, index) => {
-                const linkFormatado = arq.startsWith("http") ? arq : `https://${arq}`;
                 listaArquivosHTML += `
                     <li class="item-arquivo">
-                        <a href="${linkFormatado}" target="_blank">🔗 ${arq}</a>
-                        <button class="btn-remover-arq" data-id="${venda.id}" data-index="${index}">✕</button>
+                        <a href="${escapeHTML(urlSegura(arq))}" target="_blank" rel="noopener noreferrer">🔗 ${escapeHTML(nomeArquivo(arq))}</a>
+                        <button class="btn-remover-arq" data-id="${escapeHTML(venda.id)}" data-index="${index}">✕</button>
                     </li>
                 `;
             });
             listaArquivosHTML += `</ul>`;
         } else {
-            listaArquivosHTML = `<span style="color: #666; font-size: 0.8rem;">Nenhum arquivo ou link.</span>`;
+            listaArquivosHTML = `<span style="color: #666; font-size: 0.8rem;">Nenhum arquivo.</span>`;
         }
 
         tr.innerHTML = `
-            <td style="font-weight: bold;">${venda.nomeCliente || '-'}</td>
-            <td><span style="background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border);">${venda.squad || 'Não atribuído'}</span></td>
+            <td style="font-weight: bold;">${escapeHTML(venda.nomeCliente || '-')}</td>
+            <td><span style="background: rgba(255,255,255,0.05); padding: 4px 8px; border-radius: 4px; border: 1px solid var(--border);">${escapeHTML(venda.squad || 'Não atribuído')}</span></td>
             <td>
-                <select class="select-social-midia" data-id="${venda.id}">
+                <select class="select-social-midia" data-id="${escapeHTML(venda.id)}">
                     <option value="" ${socialMidia === "" ? "selected" : ""}>Selecione...</option>
                     <option value="Kailany" ${socialMidia === "Kailany" ? "selected" : ""}>Kailany</option>
                     <option value="Nathalia" ${socialMidia === "Nathalia" ? "selected" : ""}>Nathalia</option>
                 </select>
             </td>
             <td>
-                <button class="btn-clip btn-anexar" data-id="${venda.id}">📎 Adicionar Link/Arquivo</button>
+                <button class="btn-clip btn-anexar" data-id="${escapeHTML(venda.id)}">📎 Adicionar Arquivo</button>
             </td>
             <td>
                 ${listaArquivosHTML}
@@ -108,17 +132,13 @@ const renderizarTabelaMidias = () => {
         });
     });
 
+    // Abre apenas o seletor de arquivos do dispositivo (sem digitar link)
     document.querySelectorAll('.btn-anexar').forEach(btn => {
-        btn.addEventListener('click', async (e) => {
-            const id = e.target.getAttribute('data-id');
-            const linkOuCaminho = prompt("Insira a URL do arquivo/drive ou o caminho do arquivo local:");
-            if (linkOuCaminho && linkOuCaminho.trim() !== "") {
-                const venda = vendasMidiasCache.find(v => v.id === id);
-                const arquivosAtuais = venda.arquivosMidia || [];
-                arquivosAtuais.push(linkOuCaminho.trim());
-
-                await updateDoc(doc(db, "vendas", id), { arquivosMidia: arquivosAtuais });
-            }
+        btn.addEventListener('click', (e) => {
+            clienteAlvoUpload = e.currentTarget.getAttribute('data-id');
+            botaoAlvoUpload = e.currentTarget;
+            fileInputGlobal.value = "";
+            fileInputGlobal.click();
         });
     });
 
@@ -128,20 +148,76 @@ const renderizarTabelaMidias = () => {
             const index = parseInt(e.target.getAttribute('data-index'));
 
             const venda = vendasMidiasCache.find(v => v.id === id);
-            if (venda && venda.arquivosMidia) {
-                const novosArquivos = [...venda.arquivosMidia];
-                novosArquivos.splice(index, 1);
-                await updateDoc(doc(db, "vendas", id), { arquivosMidia: novosArquivos });
+            const valor = venda && venda.arquivosMidia ? venda.arquivosMidia[index] : undefined;
+            if (valor !== undefined) {
+                await updateDoc(doc(db, "vendas", id), { arquivosMidia: arrayRemove(valor) });
+                // Se o arquivo estiver no Storage, apaga também de lá
+                if (ehArquivoDoStorage(valor)) {
+                    try { await deleteObject(ref(storage, valor)); }
+                    catch (err) { console.warn("Não foi possível apagar o arquivo do Storage:", err); }
+                }
             }
         });
     });
 };
 
-const q = query(collection(db, "vendas"), orderBy("dataCadastro", "desc"));
-onSnapshot(q, (snapshot) => {
-    vendasMidiasCache = [];
-    snapshot.forEach((doc) => {
-        vendasMidiasCache.push({ id: doc.id, ...doc.data() });
-    });
-    renderizarTabelaMidias();
+const renderSeguro = renderAdiavel(listaMidiasCorpo, renderizarTabelaMidias);
+onSnapshot(collection(db, "vendas"), (snapshot) => {
+    vendasMidiasCache = docsOrdenados(snapshot);
+    renderSeguro();
+});
+
+// Envia os arquivos escolhidos no dispositivo para o Firebase Storage e salva o link no cliente
+fileInputGlobal.addEventListener('change', async () => {
+    const arquivos = Array.from(fileInputGlobal.files || []);
+    const id = clienteAlvoUpload;
+    const botao = botaoAlvoUpload;
+    if (!id || arquivos.length === 0) return;
+
+    const textoOriginal = botao ? botao.textContent : "";
+    if (botao) botao.disabled = true;
+
+    const urls = [];
+    const falhas = [];
+
+    for (let i = 0; i < arquivos.length; i++) {
+        const arquivo = arquivos[i];
+
+        if (arquivo.size > TAMANHO_MAXIMO_MB * 1024 * 1024) {
+            falhas.push(`${arquivo.name}: maior que ${TAMANHO_MAXIMO_MB} MB`);
+            continue;
+        }
+
+        if (botao) botao.textContent = `⏳ Enviando ${i + 1}/${arquivos.length}...`;
+
+        try {
+            const nomeSeguro = arquivo.name.replace(/[^\w.\-]+/g, '_');
+            const caminho = `midias/${id}/${Date.now()}_${nomeSeguro}`;
+            const arquivoRef = ref(storage, caminho);
+            await uploadBytes(arquivoRef, arquivo);
+            urls.push(await getDownloadURL(arquivoRef));
+        } catch (err) {
+            console.error("Erro ao enviar arquivo:", err);
+            falhas.push(`${arquivo.name}: ${err.code || err.message || err}`);
+        }
+    }
+
+    try {
+        if (urls.length > 0) {
+            await updateDoc(doc(db, "vendas", id), { arquivosMidia: arrayUnion(...urls) });
+        }
+    } catch (err) {
+        console.error("Erro ao salvar arquivos no cliente:", err);
+        falhas.push("Falha ao salvar no cadastro: " + (err.code || err.message || err));
+    }
+
+    if (botao && document.body.contains(botao)) {
+        botao.disabled = false;
+        botao.textContent = textoOriginal;
+    }
+    fileInputGlobal.value = "";
+
+    if (falhas.length > 0) {
+        alert("Alguns arquivos não foram enviados:\n\n" + falhas.join("\n"));
+    }
 });

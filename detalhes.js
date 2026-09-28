@@ -233,6 +233,19 @@ const urlSegura = (v) => {
     return /^https?:\/\//i.test(s) ? s : `https://${s}`;
 };
 
+// Mostra só o nome do arquivo quando o link é do Firebase Storage; outros links continuam como foram digitados
+const nomeArquivo = (arq) => {
+    try {
+        const u = new URL(String(arq).trim());
+        if (u.hostname.includes('firebasestorage')) {
+            const caminho = decodeURIComponent(u.pathname.split('/o/')[1] || '');
+            const nome = caminho.split('/').pop().replace(/^\d+_/, '');
+            if (nome) return nome;
+        }
+    } catch (e) { /* não é URL válida: mostra como veio */ }
+    return String(arq);
+};
+
 const formatarData = (v) => {
     if (!v) return '';
     // Timestamp do Firestore
@@ -260,7 +273,7 @@ const valorHTML = (valor, tipo) => {
     }
     if (tipo === 'lista') {
         return (Array.isArray(valor) ? valor : [valor])
-            .map((arq) => `<a href="${escapeHTML(urlSegura(arq))}" target="_blank" rel="noopener noreferrer">🔗 ${escapeHTML(arq)}</a>`)
+            .map((arq) => `<a href="${escapeHTML(urlSegura(arq))}" target="_blank" rel="noopener noreferrer">🔗 ${escapeHTML(nomeArquivo(arq))}</a>`)
             .join('<br>');
     }
     if (tipo === 'data') return escapeHTML(formatarData(valor));

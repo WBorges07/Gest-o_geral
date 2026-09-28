@@ -118,6 +118,7 @@
 </head>
 <body class="dark-mode">
 
+<!-- Seletor de arquivos do dispositivo local (aberto pelo botão "Adicionar Arquivo") -->
 <input type="file" id="fileInputGlobal" multiple style="display: none;">
 
 <nav class="sidebar" style="display: flex; flex-direction: column; justify-content: space-between; height: 100vh;">
@@ -158,7 +159,7 @@
                         <th>Cliente</th>
                         <th>Squad</th>
                         <th>Social Mídia</th>
-                        <th style="min-width: 180px;">Adicionar Links/Arquivos</th>
+                        <th style="min-width: 180px;">Adicionar Arquivos</th>
                         <th style="min-width: 250px;">Arquivos Salvos</th>
                     </tr>
                 </thead>
@@ -167,14 +168,6 @@
         </div>
     </div>
 </main>
-
-<script>
-    document.addEventListener('click', function(e) {
-        if (e.target && e.target.classList.contains('btn-clip')) {
-            document.getElementById('fileInputGlobal').click();
-        }
-    });
-</script>
 
 <script type="module" src="midias.js"></script>
 </body>

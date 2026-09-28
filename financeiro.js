@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, onSnapshot, query, orderBy, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { escapeHTML, docsOrdenados } from "./util.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyARsHedCxsS4n3s6WxEopEDXzQPWAjrhp8",
@@ -33,34 +34,48 @@ const selAno = document.getElementById('filtroAnoFin');
 
 let dadosFinanceiro = [];
 
-window.alternarStatusPagamento = async (id, statusAtual) => {
+// dataCadastro pode ser string ISO (gravada pelo app.js) ou Timestamp do Firestore
+const dataDoCadastro = (v) => {
+    if (!v) return null;
+    if (typeof v === 'object' && typeof v.seconds === 'number') return new Date(v.seconds * 1000);
+    const dt = new Date(v);
+    return isNaN(dt.getTime()) ? null : dt;
+};
+
+const alternarStatusPagamento = async (id, statusAtual) => {
     const novoStatus = statusAtual === "Pago" ? "Pendente" : "Pago";
     try {
-        await updateDoc(doc(db, "vendas", id), {
-            statusFinanceiro: novoStatus
-        });
+        await updateDoc(doc(db, "vendas", id), { statusFinanceiro: novoStatus });
     } catch (error) {
         console.error("Erro ao atualizar status financeiro:", error);
+        alert("Erro ao atualizar o status.\n\nMotivo: " + (error.code || error.message || error));
     }
 };
+
+// Delegação de eventos (sem onclick inline nem função global)
+listaCorpo.addEventListener('click', (e) => {
+    const btn = e.target.closest('.badge-status');
+    if (!btn) return;
+    alternarStatusPagamento(btn.getAttribute('data-id'), btn.getAttribute('data-status'));
+});
 
 const renderizarFinanceiro = () => {
     const vFiltro = selVendedor.value;
     const mFiltro = selMes.value;
     const aFiltro = selAno.value;
 
-    listaCorpo.innerHTML = "";
+    let html = "";
 
     dadosFinanceiro.forEach(d => {
-        // Leitura unificada de campos cadastrados na aba Vendas
-        const dataExibicao = d.dataPgtoInicial || (d.dataCadastro?.seconds ? new Date(d.dataCadastro.seconds * 1000).toLocaleDateString('pt-BR') : "---");
-        
+        const dtCadastro = dataDoCadastro(d.dataCadastro);
+        const dataExibicao = d.dataPgtoInicial || (dtCadastro ? dtCadastro.toLocaleDateString('pt-BR') : "---");
+
         let anoVenda = "";
         if (d.dataPgtoInicial && d.dataPgtoInicial.includes('/')) {
             const partes = d.dataPgtoInicial.split('/');
             if (partes.length === 3) anoVenda = partes[2];
-        } else if (d.dataCadastro?.seconds) {
-            anoVenda = new Date(d.dataCadastro.seconds * 1000).getFullYear().toString();
+        } else if (dtCadastro) {
+            anoVenda = String(dtCadastro.getFullYear());
         }
 
         const mesReferencia = d.pagamentoMes || d.primeiroPagamentoMes || "";
@@ -74,20 +89,20 @@ const renderizarFinanceiro = () => {
         const aBate = aFiltro === "todos" || anoVenda === aFiltro;
 
         if (vBate && mBate && aBate) {
-            const status = d.statusFinanceiro || "Pendente";
+            const status = d.statusFinanceiro === "Pago" ? "Pago" : "Pendente";
             const classeStatus = status === "Pago" ? "pago" : "pendente";
 
-            listaCorpo.innerHTML += `
+            html += `
                 <tr>
-                    <td style="font-size: 0.8rem; color: #888;">${dataExibicao}</td>
-                    <td>${d.vendedor || '-'}</td>
-                    <td style="font-weight: bold;">${clienteNome}</td>
-                    <td>${d.telefone || '-'}</td>
-                    <td style="color: var(--accent); font-weight: bold;">${valorMensal}</td>
-                    <td>${valorEntrada}</td>
-                    <td>${formaPgto}</td>
+                    <td style="font-size: 0.8rem; color: #888;">${escapeHTML(dataExibicao)}</td>
+                    <td>${escapeHTML(d.vendedor || '-')}</td>
+                    <td style="font-weight: bold;">${escapeHTML(clienteNome)}</td>
+                    <td>${escapeHTML(d.telefone || '-')}</td>
+                    <td style="color: var(--accent); font-weight: bold;">${escapeHTML(valorMensal)}</td>
+                    <td>${escapeHTML(valorEntrada)}</td>
+                    <td>${escapeHTML(formaPgto)}</td>
                     <td>
-                        <button class="badge-status ${classeStatus}" onclick="alternarStatusPagamento('${d.id}', '${status}')">
+                        <button class="badge-status ${classeStatus}" data-id="${escapeHTML(d.id)}" data-status="${status}">
                             ${status}
                         </button>
                     </td>
@@ -95,10 +110,12 @@ const renderizarFinanceiro = () => {
             `;
         }
     });
+
+    listaCorpo.innerHTML = html;
 };
 
-onSnapshot(query(collection(db, "vendas"), orderBy("dataCadastro", "desc")), (snap) => {
-    dadosFinanceiro = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+onSnapshot(collection(db, "vendas"), (snap) => {
+    dadosFinanceiro = docsOrdenados(snap);
     renderizarFinanceiro();
 });
 

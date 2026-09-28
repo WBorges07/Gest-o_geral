@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, onSnapshot, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { escapeHTML, urlSegura, docsOrdenados, renderAdiavel } from "./util.js";
 
 const firebaseConfig = {
     apiKey: "AIzaSyARsHedCxsS4n3s6WxEopEDXzQPWAjrhp8",
@@ -61,24 +62,24 @@ const renderizarTabelaWeb = () => {
         const linkProj = venda.linkProjetoWeb || "";
 
         tr.innerHTML = `
-            <td>${venda.nomeCliente || '-'}</td>
-            <td>${venda.plano || '-'}</td>
-            <td>${venda.siteLandingPage || '-'}</td>
+            <td>${escapeHTML(venda.nomeCliente || '-')}</td>
+            <td>${escapeHTML(venda.plano || '-')}</td>
+            <td>${venda.siteLandingPage ? `<a href="${escapeHTML(urlSegura(venda.siteLandingPage))}" target="_blank" rel="noopener noreferrer">🔗 ${escapeHTML(venda.siteLandingPage)}</a>` : '-'}</td>
             <td>
-                <select class="select-status-web select-designer-resp" data-id="${venda.id}">
+                <select class="select-status-web select-designer-resp" data-id="${escapeHTML(venda.id)}">
                     <option value="Lucas" ${designerSelecionado === "Lucas" ? "selected" : ""}>Lucas</option>
                     <option value="Phelippe" ${designerSelecionado === "Phelippe" ? "selected" : ""}>Phelippe</option>
                 </select>
             </td>
             <td>
-                <select class="select-status-web select-status-proj" data-id="${venda.id}">
+                <select class="select-status-web select-status-proj" data-id="${escapeHTML(venda.id)}">
                     <option value="Pendente" ${statusProj === "Pendente" ? "selected" : ""}>Pendente</option>
                     <option value="Em Andamento" ${statusProj === "Em Andamento" ? "selected" : ""}>Em Andamento</option>
                     <option value="Concluído" ${statusProj === "Concluído" ? "selected" : ""}>Concluído</option>
                 </select>
             </td>
             <td>
-                <input type="text" class="input-link-proj" data-id="${venda.id}" value="${linkProj}" placeholder="https://..." style="width: 180px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+                <input type="text" class="input-link-proj" data-id="${escapeHTML(venda.id)}" value="${escapeHTML(linkProj)}" placeholder="https://..." style="width: 180px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
             </td>
         `;
 
@@ -110,11 +111,8 @@ const renderizarTabelaWeb = () => {
     });
 };
 
-const q = query(collection(db, "vendas"), orderBy("dataCadastro", "desc"));
-onSnapshot(q, (snapshot) => {
-    vendasCache = [];
-    snapshot.forEach((doc) => {
-        vendasCache.push({ id: doc.id, ...doc.data() });
-    });
-    renderizarTabelaWeb();
+const renderSeguro = renderAdiavel(listaWebCorpo, renderizarTabelaWeb);
+onSnapshot(collection(db, "vendas"), (snapshot) => {
+    vendasCache = docsOrdenados(snapshot);
+    renderSeguro();
 });

@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { getFirestore, collection, onSnapshot, doc, updateDoc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { escapeHTML, docsOrdenados, renderAdiavel } from "./util.js";
 import { botaoOlhoHTML, ativarOlhos } from "./detalhes.js";
 
 const firebaseConfig = {
@@ -86,50 +87,50 @@ const renderizarTabelaCS = () => {
 
         tr.innerHTML = `
             <td>${botaoOlhoHTML(venda.id)}</td>
-            <td>${venda.dataPgtoInicial || '-'}</td>
+            <td>${escapeHTML(venda.dataPgtoInicial || '-')}</td>
             <td>
-                <select class="select-jainvestiu-cs" data-id="${venda.id}" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+                <select class="select-jainvestiu-cs" data-id="${escapeHTML(venda.id)}" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
                     <option value="Sim" ${jaInvestia === "Sim" ? "selected" : ""}>Sim</option>
                     <option value="Não" ${jaInvestia === "Não" ? "selected" : ""}>Não</option>
                 </select>
             </td>
-            <td>${venda.vendedor || '-'}</td>
-            <td>${venda.nomeCliente || '-'}</td>
+            <td>${escapeHTML(venda.vendedor || '-')}</td>
+            <td>${escapeHTML(venda.nomeCliente || '-')}</td>
             <td>
-                <input type="text" class="input-escritorio-cs" data-id="${venda.id}" value="${nomeEscritorio}" placeholder="Nome do escritório" style="width: 140px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+                <input type="text" class="input-escritorio-cs" data-id="${escapeHTML(venda.id)}" value="${escapeHTML(nomeEscritorio)}" placeholder="Nome do escritório" style="width: 140px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
             </td>
-            <td>${venda.telefone || '-'}</td>
+            <td>${escapeHTML(venda.telefone || '-')}</td>
             <td>
-                <input type="text" class="input-tel-campanha-cs" data-id="${venda.id}" value="${telefoneCampanha}" placeholder="(00) 00000-0000" style="width: 130px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
-            </td>
-            <td>
-                <input type="date" class="input-data-onboarding" data-id="${venda.id}" value="${dataOnboarding}" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+                <input type="text" class="input-tel-campanha-cs" data-id="${escapeHTML(venda.id)}" value="${escapeHTML(telefoneCampanha)}" placeholder="(00) 00000-0000" style="width: 130px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
             </td>
             <td>
-                <input type="time" class="input-horario-onboarding" data-id="${venda.id}" value="${horarioOnboarding}" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+                <input type="date" class="input-data-onboarding" data-id="${escapeHTML(venda.id)}" value="${escapeHTML(dataOnboarding)}" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
             </td>
             <td>
-                <select class="select-squad-cs" data-id="${venda.id}" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+                <input type="time" class="input-horario-onboarding" data-id="${escapeHTML(venda.id)}" value="${escapeHTML(horarioOnboarding)}" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+            </td>
+            <td>
+                <select class="select-squad-cs" data-id="${escapeHTML(venda.id)}" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
                     <option value="" ${squad === "" ? "selected" : ""}>Selecione...</option>
                     <option value="Squad Black Mamba" ${squad === "Squad Black Mamba" ? "selected" : ""}>Squad Black Mamba</option>
                     <option value="Squad Titans" ${squad === "Squad Titans" ? "selected" : ""}>Squad Titans</option>
                 </select>
             </td>
             <td>
-                <input type="text" class="input-instagram-cs" data-id="${venda.id}" value="${instagram}" placeholder="@usuario" style="width: 110px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+                <input type="text" class="input-instagram-cs" data-id="${escapeHTML(venda.id)}" value="${escapeHTML(instagram)}" placeholder="@usuario" style="width: 110px; padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
             </td>
-            <td>${enderecoCompleto}</td>
-            <td>${cep}</td>
+            <td>${escapeHTML(enderecoCompleto)}</td>
+            <td>${escapeHTML(cep)}</td>
             <td>
-                <select class="select-status-cs" data-id="${venda.id}">
+                <select class="select-status-cs" data-id="${escapeHTML(venda.id)}">
                     <option value="Sim" ${onboardingAconteceu === "Sim" ? "selected" : ""}>Sim</option>
                     <option value="Não" ${onboardingAconteceu === "Não" ? "selected" : ""}>Não</option>
                 </select>
             </td>
-            <td>${venda.plano || '-'}</td>
-            <td>${venda.repagInstagram || '-'}</td>
+            <td>${escapeHTML(venda.plano || '-')}</td>
+            <td>${escapeHTML(venda.repagInstagram || '-')}</td>
             <td>
-                <textarea class="input-textarea-cs input-anotacoes-cs" data-id="${venda.id}" placeholder="Digitar anotações...">${anotacoesCS}</textarea>
+                <textarea class="input-textarea-cs input-anotacoes-cs" data-id="${escapeHTML(venda.id)}" placeholder="Digitar anotações...">${escapeHTML(anotacoesCS)}</textarea>
             </td>
         `;
 
@@ -217,11 +218,8 @@ filtroVendedorCS.addEventListener('change', renderizarTabelaCS);
 filtroMesCS.addEventListener('change', renderizarTabelaCS);
 filtroAnoCS.addEventListener('change', renderizarTabelaCS);
 
-const q = query(collection(db, "vendas"), orderBy("dataCadastro", "desc"));
-onSnapshot(q, (snapshot) => {
-    vendasCSCache = [];
-    snapshot.forEach((doc) => {
-        vendasCSCache.push({ id: doc.id, ...doc.data() });
-    });
-    renderizarTabelaCS();
+const renderSeguro = renderAdiavel(listaCSCorpo, renderizarTabelaCS);
+onSnapshot(collection(db, "vendas"), (snapshot) => {
+    vendasCSCache = docsOrdenados(snapshot);
+    renderSeguro();
 });
