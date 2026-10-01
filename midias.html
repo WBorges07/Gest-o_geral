@@ -13,6 +13,7 @@
             margin-bottom: 20px;
             border-bottom: 1px solid var(--border);
             padding-bottom: 10px;
+            flex-wrap: wrap;
         }
         .tab-btn {
             background: var(--input);
@@ -34,7 +35,49 @@
             color: var(--accent);
             border-color: var(--accent);
         }
-        .select-social-midia {
+
+        /* Submenus de status (aparecem em "Gerenciamento de mídias" e "Repaginação") */
+        .subtabs-status {
+            display: none;
+            gap: 8px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .subtab-btn {
+            background: transparent;
+            color: #aaa;
+            border: 1px solid var(--border);
+            padding: 6px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+        }
+        .subtab-btn:hover {
+            color: var(--text);
+            border-color: var(--accent);
+        }
+        .subtab-btn.active {
+            background: var(--accent);
+            color: #06110b;
+            border-color: var(--accent);
+        }
+        .subtab-btn .contador {
+            background: rgba(128, 128, 128, 0.25);
+            border-radius: 10px;
+            padding: 1px 8px;
+            font-size: 0.72rem;
+        }
+        .subtab-btn.active .contador {
+            background: rgba(0, 0, 0, 0.2);
+        }
+
+        .select-social-midia,
+        .select-status-midia {
             width: 100%;
             padding: 6px;
             border-radius: 6px;
@@ -44,6 +87,16 @@
             font-size: 0.85rem;
             outline: none;
             cursor: pointer;
+        }
+        .badge-status-midia {
+            display: block;
+            font-size: 0.75rem;
+            padding: 3px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: rgba(128, 128, 128, 0.09);
+            margin-bottom: 4px;
+            white-space: nowrap;
         }
         .btn-clip {
             background: rgba(0, 255, 136, 0.15);
@@ -114,6 +167,201 @@
             background: #ff4444;
             color: #fff;
         }
+
+        /* ---------- Caderneta de observações ---------- */
+        .btn-caderneta {
+            position: relative;
+            background: rgba(0, 255, 136, 0.12);
+            color: var(--accent, #00ff88);
+            border: 1px solid var(--accent, #00ff88);
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0;
+            transition: all 0.2s ease;
+        }
+        .btn-caderneta:hover {
+            background: var(--accent, #00ff88);
+            color: #06110b;
+            transform: scale(1.06);
+        }
+        .btn-caderneta svg { pointer-events: none; }
+        .btn-caderneta .qtd-obs {
+            position: absolute;
+            top: -7px;
+            right: -7px;
+            min-width: 18px;
+            height: 18px;
+            padding: 0 4px;
+            border-radius: 9px;
+            background: var(--accent, #00ff88);
+            color: #06110b;
+            font-size: 0.68rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+        }
+        .btn-caderneta:hover .qtd-obs {
+            background: #06110b;
+            color: var(--accent, #00ff88);
+        }
+
+        .obs-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.65);
+            backdrop-filter: blur(3px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+        .obs-overlay.aberto { display: flex; }
+
+        .obs-modal {
+            background: var(--card, var(--input, #161b22));
+            color: var(--text, #c9d1d9);
+            border: 1px solid var(--border, #30363d);
+            border-radius: 14px;
+            width: 100%;
+            max-width: 640px;
+            max-height: 88vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
+            animation: obsEntrada 0.2s ease;
+        }
+        @keyframes obsEntrada {
+            from { opacity: 0; transform: translateY(10px) scale(0.98); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .obs-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--border, #30363d);
+        }
+        .obs-header h3 { margin: 0; font-size: 1.1rem; }
+        .obs-header small { display: block; opacity: 0.65; font-weight: 400; margin-top: 3px; font-size: 0.8rem; }
+        .obs-fechar {
+            background: transparent;
+            color: inherit;
+            border: 1px solid var(--border, #30363d);
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            font-size: 1.05rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+        .obs-fechar:hover { background: #ff4444; border-color: #ff4444; color: #fff; }
+
+        .obs-body {
+            padding: 18px 22px 22px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .obs-novo textarea {
+            width: 100%;
+            min-height: 90px;
+            padding: 10px 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border, #30363d);
+            background: var(--input, #21262d);
+            color: var(--text, #c9d1d9);
+            font-family: inherit;
+            font-size: 0.92rem;
+            resize: vertical;
+            box-sizing: border-box;
+            outline: none;
+        }
+        .obs-novo textarea:focus {
+            border-color: var(--accent, #00ff88);
+            box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.12);
+        }
+        .obs-acoes {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        .obs-acoes small { opacity: 0.55; font-size: 0.72rem; }
+        .btn-obs-salvar {
+            background: var(--accent, #00ff88);
+            color: #06110b;
+            border: none;
+            padding: 9px 20px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 0.88rem;
+            cursor: pointer;
+            transition: background 0.2s ease, transform 0.15s ease;
+        }
+        .btn-obs-salvar:hover { background: var(--accent-hover, #00cc6a); }
+        .btn-obs-salvar:active { transform: scale(0.98); }
+        .btn-obs-salvar:disabled { opacity: 0.6; cursor: not-allowed; }
+
+        .obs-historico h4 {
+            margin: 0 0 10px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: var(--accent, #00ff88);
+        }
+        .obs-lista {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .obs-item {
+            background: rgba(128, 128, 128, 0.09);
+            border: 1px solid var(--border, #30363d);
+            border-radius: 8px;
+            padding: 10px 12px;
+        }
+        .obs-item-topo {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            margin-bottom: 6px;
+            font-size: 0.72rem;
+            opacity: 0.7;
+        }
+        .obs-item-texto {
+            font-size: 0.92rem;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .btn-obs-excluir {
+            background: none;
+            border: none;
+            color: var(--danger, #ff4444);
+            cursor: pointer;
+            font-size: 0.85rem;
+            padding: 2px 4px;
+            opacity: 0.8;
+        }
+        .btn-obs-excluir:hover { opacity: 1; }
+        .obs-vazio {
+            text-align: center;
+            opacity: 0.5;
+            font-size: 0.85rem;
+            padding: 14px 0;
+        }
     </style>
 </head>
 <body class="dark-mode">
@@ -145,22 +393,28 @@
     <div class="container">
         <h2>📎 Gestão de Mídias e Arquivos</h2>
 
-        <!-- ABAS DE SQUADS -->
+        <!-- ABAS -->
         <div class="tabs-squad">
-            <button class="tab-btn active" data-squad="todos">Todos</button>
-            <button class="tab-btn" data-squad="Squad Black Mamba">Squad Black Mamba</button>
-            <button class="tab-btn" data-squad="Squad Titans">Squad Titans</button>
+            <button class="tab-btn active" data-aba="todos">Todos</button>
+            <button class="tab-btn" data-aba="gerenciamento">Gerenciamento de mídias</button>
+            <button class="tab-btn" data-aba="repaginacao">Repaginação</button>
         </div>
+
+        <!-- SUBMENUS DE STATUS (preenchidos pelo midias.js) -->
+        <div class="subtabs-status" id="subTabsStatus"></div>
 
         <div class="table-container">
             <table>
                 <thead>
                     <tr>
                         <th>Cliente</th>
+                        <th>Plano</th>
                         <th>Squad</th>
                         <th>Social Mídia</th>
+                        <th style="min-width: 170px;">Status</th>
                         <th style="min-width: 180px;">Adicionar Arquivos</th>
                         <th style="min-width: 250px;">Arquivos Salvos</th>
+                        <th id="thObs" style="width: 70px; display: none;">Obs.</th>
                     </tr>
                 </thead>
                 <tbody id="listaMidiasCorpo"></tbody>
@@ -168,6 +422,29 @@
         </div>
     </div>
 </main>
+
+<!-- JANELA FLUTUANTE: caderneta de observações -->
+<div class="obs-overlay" id="obsOverlay">
+    <div class="obs-modal" role="dialog" aria-modal="true" aria-labelledby="obsTitulo">
+        <div class="obs-header">
+            <h3 id="obsTitulo"></h3>
+            <button type="button" class="obs-fechar" id="obsFechar" aria-label="Fechar">✕</button>
+        </div>
+        <div class="obs-body">
+            <div class="obs-novo">
+                <textarea id="obsTexto" placeholder="Escreva uma nova observação..."></textarea>
+                <div class="obs-acoes">
+                    <small>Ctrl + Enter para salvar</small>
+                    <button type="button" class="btn-obs-salvar" id="obsSalvar">Salvar observação</button>
+                </div>
+            </div>
+            <div class="obs-historico">
+                <h4>📓 Histórico de observações</h4>
+                <div class="obs-lista" id="obsLista"></div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script type="module" src="midias.js"></script>
 </body>
