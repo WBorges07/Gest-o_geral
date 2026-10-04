@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, addDoc, onSnapshot, doc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { escapeHTML, docsOrdenados } from "./util.js";
+import { escapeHTML, docsOrdenados, dataCadastroMs } from "./util.js";
 import { botaoOlhoHTML, ativarOlhos } from "./detalhes.js";
 
 const firebaseConfig = {
@@ -85,6 +85,15 @@ const filtroMes = document.getElementById('filtroMes');
 const filtroAno = document.getElementById('filtroAno');
 const btnSalvar = document.getElementById('btnSalvar');
 
+// Filtros da "Lista de Clientes" (independentes dos filtros que alimentam os totais)
+const filtroListaVendedor = document.getElementById('filtroListaVendedor');
+const filtroListaMes = document.getElementById('filtroListaMes');
+const filtroListaAno = document.getElementById('filtroListaAno');
+const somenteHoje = document.getElementById('somenteHoje');
+const infoLista = document.getElementById('infoLista');
+
+const NOMES_MESES = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
+
 let vendasCache = [];
 
 // Ícone de olho -> abre a janela flutuante com todas as informações do cliente
@@ -156,6 +165,73 @@ const formatarMoeda = (val) => {
     return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 };
 
+// Data usada na busca da lista: dia do cadastro; vendas antigas sem "dataCadastro" usam a data do pgto inicial
+const dataReferencia = (venda) => {
+    const ms = dataCadastroMs(venda.dataCadastro);
+    if (ms) return new Date(ms);
+    const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(venda.dataPgtoInicial || "");
+    return m ? new Date(+m[3], +m[2] - 1, +m[1]) : null;
+};
+
+const chaveDia = (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+
+// Mês e ano atuais como padrão da busca
+const definirPadraoMesAno = () => {
+    const agora = new Date();
+    filtroListaMes.value = NOMES_MESES[agora.getMonth()];
+    filtroListaAno.value = String(agora.getFullYear());
+};
+
+// Anos disponíveis: de 2024 até o ano atual, mais qualquer ano que exista nas vendas
+const atualizarAnosLista = () => {
+    const anoAtual = new Date().getFullYear();
+    const anos = new Set();
+    for (let a = 2024; a <= anoAtual; a++) anos.add(a);
+    vendasCache.forEach(v => {
+        const d = dataReferencia(v);
+        if (d) anos.add(d.getFullYear());
+    });
+    const lista = [...anos].sort((a, b) => b - a);
+    const selecionado = filtroListaAno.value;
+
+    filtroListaAno.innerHTML = '<option value="todos">Todos os Anos</option>' +
+        lista.map(a => `<option value="${a}">${a}</option>`).join('');
+    filtroListaAno.value = (selecionado === "todos" || lista.map(String).includes(selecionado))
+        ? selecionado
+        : String(anoAtual);
+};
+
+// Vendas que aparecem na lista, conforme os filtros acima dela
+const filtrarLista = () => {
+    const hoje = new Date();
+    const vend = filtroListaVendedor.value;
+    const mes = filtroListaMes.value;
+    const ano = filtroListaAno.value;
+
+    return vendasCache.filter(venda => {
+        // "Victor Gestor" (cadastro) também é encontrado ao filtrar por "Victor"
+        const matchVendedor = (
+            vend === "todos" ||
+            venda.vendedor === vend ||
+            (venda.vendedor || "").startsWith(vend)
+        );
+        if (!matchVendedor) return false;
+
+        // Padrão: só quem foi cadastrado hoje
+        if (somenteHoje.checked) {
+            const ms = dataCadastroMs(venda.dataCadastro);
+            return ms > 0 && chaveDia(new Date(ms)) === chaveDia(hoje);
+        }
+
+        const d = dataReferencia(venda);
+        const matchMes = mes === "todos" || (!!d && NOMES_MESES[d.getMonth()] === mes);
+        const matchAno = ano === "todos" || (!!d && String(d.getFullYear()) === ano);
+        return matchMes && matchAno;
+    });
+};
+
+let diaRenderizado = "";
+
 const renderizarTabela = () => {
     const selVendedor = filtroVendedor.value;
     const selMes = filtroMes.value;
@@ -186,10 +262,27 @@ const renderizarTabela = () => {
         return matchVendedor && matchMes && matchAno;
     });
 
+    // Totais (cards): continuam seguindo os filtros "Filtrar por ..." acima dos cards
     filtrados.forEach(venda => {
         totalMens += parseMoeda(venda.mensalidadePlano);
         totalEnt += parseMoeda(venda.pagamentoInicial);
+    });
 
+    // Lista de clientes: segue os filtros que ficam logo acima dela
+    const listaVisivel = filtrarLista();
+    diaRenderizado = chaveDia(new Date());
+
+    if (somenteHoje.checked) {
+        infoLista.textContent = `Mostrando ${listaVisivel.length} cliente(s) cadastrado(s) hoje (${new Date().toLocaleDateString('pt-BR')}).`;
+    } else {
+        infoLista.textContent = `Mostrando ${listaVisivel.length} cliente(s) da busca.`;
+    }
+
+    if (listaVisivel.length === 0) {
+        listaVendasCorpo.innerHTML = `<tr><td colspan="9" style="text-align:center; color:#888; padding:20px;">${somenteHoje.checked ? "Nenhum cliente cadastrado hoje." : "Nenhum cliente encontrado para esta busca."}</td></tr>`;
+    }
+
+    listaVisivel.forEach(venda => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
             <td>${botaoOlhoHTML(venda.id)}</td>
@@ -229,10 +322,30 @@ filtroVendedor.addEventListener('change', renderizarTabela);
 filtroMes.addEventListener('change', renderizarTabela);
 filtroAno.addEventListener('change', renderizarTabela);
 
+// Filtros da lista: padrão = mês e ano atuais, exibindo só os cadastrados hoje
+definirPadraoMesAno();
+atualizarAnosLista();
+definirPadraoMesAno();
+
+filtroListaVendedor.addEventListener('change', renderizarTabela);
+// Ao escolher outro mês/ano o usuário quer pesquisar o histórico: sai do modo "somente hoje"
+filtroListaMes.addEventListener('change', () => { somenteHoje.checked = false; renderizarTabela(); });
+filtroListaAno.addEventListener('change', () => { somenteHoje.checked = false; renderizarTabela(); });
+somenteHoje.addEventListener('change', () => {
+    if (somenteHoje.checked) definirPadraoMesAno();
+    renderizarTabela();
+});
+
+// Se a página ficar aberta na virada do dia, a lista passa a mostrar o novo dia
+setInterval(() => {
+    if (diaRenderizado && diaRenderizado !== chaveDia(new Date())) renderizarTabela();
+}, 60000);
+
 let avisouErroListagem = false;
 
 onSnapshot(collection(db, "vendas"), (snapshot) => {
     vendasCache = docsOrdenados(snapshot);
+    atualizarAnosLista();
     renderizarTabela();
 }, (error) => {
     // Sem isso, se o Firestore recusar a leitura a lista simplesmente fica vazia, sem aviso
