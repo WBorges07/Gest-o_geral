@@ -47,6 +47,78 @@
             resize: vertical;
             box-sizing: border-box;
         }
+        /* ---------- Link do onboarding (gravação da reunião) ---------- */
+        .link-onb-wrap {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .input-link-onboarding {
+            width: 190px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--input);
+            color: var(--text);
+            font-size: 0.88rem;
+            font-family: inherit;
+            outline: none;
+            box-sizing: border-box;
+            transition: var(--transition);
+        }
+        .input-link-onboarding:focus {
+            border-color: var(--accent);
+        }
+        /* Onboarding aconteceu = Sim e link ainda vazio: chama atenção até o link ser colado */
+        .input-link-onboarding.link-pendente {
+            border-color: #ff4444;
+            background: rgba(255, 68, 68, 0.12);
+            animation: pulsarLinkOnb 1.4s ease-in-out infinite;
+        }
+        .aviso-link-onb {
+            display: inline-block;
+            margin-top: 5px;
+            padding: 2px 9px;
+            border-radius: 10px;
+            background: rgba(255, 68, 68, 0.18);
+            border: 1px solid #ff4444;
+            color: #ff4444;
+            font-size: 0.72rem;
+            font-weight: 700;
+            white-space: nowrap;
+            animation: piscarAvisoOnb 1.4s ease-in-out infinite;
+        }
+        .btn-abrir-link-onb {
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 30px;
+            height: 30px;
+            border-radius: 6px;
+            border: 1px solid var(--accent);
+            background: rgba(0, 255, 136, 0.12);
+            color: var(--accent);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: var(--transition);
+        }
+        .btn-abrir-link-onb:hover {
+            background: var(--accent);
+            color: #06110b;
+        }
+        @keyframes pulsarLinkOnb {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.55); }
+            50%      { box-shadow: 0 0 0 7px rgba(255, 68, 68, 0); }
+        }
+        @keyframes piscarAvisoOnb {
+            0%, 100% { opacity: 1; }
+            50%      { opacity: 0.45; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            .input-link-onboarding.link-pendente,
+            .aviso-link-onb { animation: none; }
+        }
         .btn-logout {
             margin-top: auto;
             background: rgba(255, 68, 68, 0.15);
@@ -142,6 +214,7 @@
                         <th>Endereço completo</th>
                         <th>CEP</th>
                         <th>On. aconteceu</th>
+                        <th style="min-width: 240px;">Link do onboarding</th>
                         <th>Plano</th>
                         <th>Repag. do Instagram</th>
                         <th>Anotações de Onboarding</th>

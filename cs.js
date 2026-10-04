@@ -1,7 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { getFirestore, collection, onSnapshot, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { escapeHTML, docsOrdenados, renderAdiavel } from "./util.js";
+import { escapeHTML, urlSegura, docsOrdenados, renderAdiavel } from "./util.js";
 import { botaoOlhoHTML, ativarOlhos } from "./detalhes.js";
 
 const firebaseConfig = {
@@ -84,6 +84,9 @@ const renderizarTabelaCS = () => {
         const cep = venda.cep || "-";
         const onboardingAconteceu = venda.onboardingAconteceu || "Não";
         const anotacoesCS = venda.anotacoesCS || "";
+        const linkOnboarding = venda.linkOnboarding || "";
+        // Onboarding aconteceu = Sim e ainda sem link da gravação: destaca o campo
+        const linkPendente = onboardingAconteceu === "Sim" && !linkOnboarding.trim();
 
         tr.innerHTML = `
             <td>${botaoOlhoHTML(venda.id)}</td>
@@ -126,6 +129,13 @@ const renderizarTabelaCS = () => {
                     <option value="Sim" ${onboardingAconteceu === "Sim" ? "selected" : ""}>Sim</option>
                     <option value="Não" ${onboardingAconteceu === "Não" ? "selected" : ""}>Não</option>
                 </select>
+            </td>
+            <td>
+                <div class="link-onb-wrap">
+                    <input type="text" class="input-link-onboarding ${linkPendente ? 'link-pendente' : ''}" data-id="${escapeHTML(venda.id)}" data-alerta="${onboardingAconteceu === 'Sim' ? '1' : '0'}" value="${escapeHTML(linkOnboarding)}" placeholder="Cole o link da gravação..." autocomplete="off">
+                    ${linkOnboarding.trim() ? `<a class="btn-abrir-link-onb" href="${escapeHTML(urlSegura(linkOnboarding))}" target="_blank" rel="noopener noreferrer" title="Abrir gravação do onboarding" aria-label="Abrir gravação do onboarding">🔗</a>` : ''}
+                </div>
+                ${linkPendente ? '<span class="aviso-link-onb">⚠ Adicionar link da gravação</span>' : ''}
             </td>
             <td>${escapeHTML(venda.plano || '-')}</td>
             <td>${escapeHTML(venda.repagInstagram || '-')}</td>
@@ -202,6 +212,26 @@ const renderizarTabelaCS = () => {
             const val = e.target.value;
             aplicarClasseStatusCS(e.target, val);
             await updateDoc(doc(db, "vendas", id), { onboardingAconteceu: val });
+        });
+    });
+
+    document.querySelectorAll('.input-link-onboarding').forEach(input => {
+        // Tira o destaque assim que algo é colado/digitado (sem esperar salvar)
+        input.addEventListener('input', () => {
+            const preenchido = input.value.trim() !== "";
+            input.classList.toggle('link-pendente', !preenchido && input.dataset.alerta === "1");
+            const aviso = input.closest('td').querySelector('.aviso-link-onb');
+            if (aviso) aviso.style.display = preenchido ? 'none' : '';
+        });
+        input.addEventListener('change', async (e) => {
+            const id = e.target.getAttribute('data-id');
+            const val = e.target.value.trim();
+            try {
+                await updateDoc(doc(db, "vendas", id), { linkOnboarding: val });
+            } catch (err) {
+                console.error("Erro ao salvar link do onboarding:", err);
+                alert("Erro ao salvar o link do onboarding.\n\nMotivo: " + (err.code || err.message || err));
+            }
         });
     });
 

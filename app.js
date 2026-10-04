@@ -110,6 +110,7 @@ vendaForm.addEventListener('submit', async (e) => {
         telefone: valorCampo('telefone'),
         plano: valorCampo('plano'),
         repagInstagram: valorCampo('repagInstagram'),
+        gerenciamentoMidias: valorCampo('gerenciamentoMidias'),
         vigencia: valorCampo('vigencia'),
         area: valorCampo('area'),
         perfil: valorCampo('perfil'),

@@ -44,6 +44,8 @@ let dadosBICache = [];
 const ordemMeses = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
 
 const selAnoBI = document.getElementById('filtroAnoBI');
+const selMesBI = document.getElementById('filtroMesBI');
+const selVendedorBI = document.getElementById('filtroVendedorBI');
 let anoInicializado = false;
 
 const anoDe = (d) => {
@@ -69,7 +71,16 @@ const popularAnos = (dados) => {
 
 const renderizarDashboardBI = (todos) => {
     const anoSel = selAnoBI.value;
-    const dados = anoSel === "todos" ? todos : todos.filter(d => anoDe(d) === anoSel);
+    const mesSel = selMesBI.value;
+    const vendedorSel = selVendedorBI.value;
+
+    const dados = todos.filter(d => {
+        const bateAno = anoSel === "todos" || anoDe(d) === anoSel;
+        const bateMes = mesSel === "todos" || d.pagamentoMes === mesSel;
+        // "Victor Gestor" (cadastro) e "Victor" contam como a mesma pessoa
+        const bateVendedor = vendedorSel === "todos" || (d.vendedor || "").trim().split(' ')[0] === vendedorSel;
+        return bateAno && bateMes && bateVendedor;
+    });
 
     // 1. Quantidade de Planos Fechados
     const contagemPlanos = {};
@@ -237,6 +248,8 @@ onSnapshot(collection(db, "vendas"), (snap) => {
 });
 
 selAnoBI.addEventListener('change', () => renderizarDashboardBI(dadosBICache));
+selMesBI.addEventListener('change', () => renderizarDashboardBI(dadosBICache));
+selVendedorBI.addEventListener('change', () => renderizarDashboardBI(dadosBICache));
 
 // Redesenha os gráficos quando o tema é alternado
 window.addEventListener('temaAlterado', () => {

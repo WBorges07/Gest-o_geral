@@ -192,6 +192,7 @@ const SECOES = [
             ['Data de onboarding', 'dataOnboarding', 'data'],
             ['Horário', 'horarioOnboarding'],
             ['On. aconteceu?', 'onboardingAconteceu'],
+            ['Link do onboarding', 'linkOnboarding', 'link'],
             ['Anotações de onboarding', 'anotacoesCS', 'texto']
         ]
     },
@@ -213,6 +214,7 @@ const SECOES = [
     {
         titulo: '📎 Mídias',
         campos: [
+            ['Gerenciamento de mídias', 'gerenciamentoMidias'],
             ['Social mídia', 'socialMidia'],
             ['Links / arquivos', 'arquivosMidia', 'lista']
         ]

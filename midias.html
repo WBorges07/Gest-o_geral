@@ -6,6 +6,7 @@
     <title>CRM Pro - Mídias</title>
     <link rel="stylesheet" href="style.css">
     <script src="theme.js"></script>
+    <script src="https://unpkg.com/imask@7.6.1/dist/imask.min.js"></script>
     <style>
         .tabs-squad {
             display: flex;
@@ -362,12 +363,115 @@
             font-size: 0.85rem;
             padding: 14px 0;
         }
+
+        /* ---------- Data para entrega ---------- */
+        .input-data-entrega {
+            width: 120px;
+            padding: 6px 8px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            background: var(--input);
+            color: var(--text);
+            font-size: 0.88rem;
+            font-family: inherit;
+            outline: none;
+            box-sizing: border-box;
+        }
+        .input-data-entrega:focus {
+            border-color: var(--accent, #00ff88);
+            box-shadow: 0 0 0 3px rgba(0, 255, 136, 0.12);
+        }
+        .input-data-entrega.invalida {
+            border-color: #ff4444;
+            box-shadow: 0 0 0 3px rgba(255, 68, 68, 0.15);
+        }
+
+        /* ---------- Clipe de anexos na caderneta ---------- */
+        .obs-acoes-esq {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .btn-obs-clip {
+            background: rgba(0, 255, 136, 0.12);
+            color: var(--accent, #00ff88);
+            border: 1px solid var(--accent, #00ff88);
+            height: 36px;
+            padding: 0 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            font-size: 0.82rem;
+            transition: all 0.2s ease;
+        }
+        .btn-obs-clip:hover {
+            background: var(--accent, #00ff88);
+            color: #06110b;
+        }
+        .btn-obs-clip:disabled { opacity: 0.6; cursor: not-allowed; }
+        .btn-obs-clip svg { pointer-events: none; }
+
+        .obs-anexos-pendentes {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 8px;
+        }
+        .obs-anexos-pendentes:empty { display: none; }
+        .obs-anexo-pendente,
+        .obs-anexo-link {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            background: var(--input, #21262d);
+            padding: 5px 8px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            border: 1px solid var(--border, #30363d);
+        }
+        .obs-anexo-pendente span {
+            word-break: break-all;
+        }
+        .btn-obs-anexo-remover {
+            background: none;
+            border: none;
+            color: var(--danger, #ff4444);
+            cursor: pointer;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+        .obs-anexos {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            margin-top: 8px;
+        }
+        .obs-anexo-link a {
+            color: var(--accent, #00ff88);
+            text-decoration: none;
+            word-break: break-all;
+        }
+        .obs-anexo-link a:hover { text-decoration: underline; }
+        .obs-item-clip {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            margin-left: 6px;
+        }
     </style>
 </head>
 <body class="dark-mode">
 
 <!-- Seletor de arquivos do dispositivo local (aberto pelo botão "Adicionar Arquivo") -->
 <input type="file" id="fileInputGlobal" multiple style="display: none;">
+
+<!-- Seletor de arquivos da caderneta de observações (aberto pelo clipe de papel) -->
+<input type="file" id="obsFileInput" multiple style="display: none;">
 
 <nav class="sidebar" style="display: flex; flex-direction: column; justify-content: space-between; height: 100vh;">
     <div>
@@ -395,7 +499,7 @@
 
         <!-- ABAS -->
         <div class="tabs-squad">
-            <button class="tab-btn active" data-aba="todos">Todos</button>
+            <button class="tab-btn active" data-aba="trafego">Tráfego</button>
             <button class="tab-btn" data-aba="gerenciamento">Gerenciamento de mídias</button>
             <button class="tab-btn" data-aba="repaginacao">Repaginação</button>
         </div>
@@ -412,6 +516,7 @@
                         <th>Squad</th>
                         <th>Social Mídia</th>
                         <th style="min-width: 170px;">Status</th>
+                        <th id="thEntrega" style="min-width: 150px; display: none;">Data para entrega</th>
                         <th style="min-width: 180px;">Adicionar Arquivos</th>
                         <th style="min-width: 250px;">Arquivos Salvos</th>
                         <th id="thObs" style="width: 70px; display: none;">Obs.</th>
@@ -433,8 +538,15 @@
         <div class="obs-body">
             <div class="obs-novo">
                 <textarea id="obsTexto" placeholder="Escreva uma nova observação..."></textarea>
+                <div class="obs-anexos-pendentes" id="obsAnexosPendentes"></div>
                 <div class="obs-acoes">
-                    <small>Ctrl + Enter para salvar</small>
+                    <div class="obs-acoes-esq">
+                        <button type="button" class="btn-obs-clip" id="obsClip" title="Anexar arquivos" aria-label="Anexar arquivos à observação">
+                            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                            Anexar
+                        </button>
+                        <small>Ctrl + Enter para salvar</small>
+                    </div>
                     <button type="button" class="btn-obs-salvar" id="obsSalvar">Salvar observação</button>
                 </div>
             </div>

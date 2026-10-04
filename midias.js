@@ -37,7 +37,9 @@ const listaMidiasCorpo = document.getElementById('listaMidiasCorpo');
 const fileInputGlobal = document.getElementById('fileInputGlobal');
 const subTabsEl = document.getElementById('subTabsStatus');
 const thObs = document.getElementById('thObs');
+const thEntrega = document.getElementById('thEntrega');
 const TAMANHO_MAXIMO_MB = 50;
+const SOCIAL_MIDIAS = ["Carol", "Kailany", "Nathalia"];
 let clienteAlvoUpload = null;
 let botaoAlvoUpload = null;
 
@@ -73,28 +75,49 @@ const STATUS_MIDIA = [
 
 // Cada aba de trabalho guarda o seu próprio status e o seu próprio histórico de observações no cliente (campos no Firestore)
 const ABAS = {
-    gerenciamento: { rotulo: "Gerenciamento de mídias", campo: "statusGerenciamentoMidias", campoObs: "observacoesGerenciamento" },
-    repaginacao:   { rotulo: "Repaginação",             campo: "statusRepaginacao",         campoObs: "observacoesRepaginacao" }
+    gerenciamento: { rotulo: "Gerenciamento de mídias", campo: "statusGerenciamentoMidias", campoObs: "observacoesGerenciamento", campoEntrega: "dataEntregaGerenciamento" },
+    repaginacao:   { rotulo: "Repaginação",             campo: "statusRepaginacao",         campoObs: "observacoesRepaginacao",   campoEntrega: "dataEntregaRepaginacao" }
 };
 
 const tabBtns = document.querySelectorAll('.tab-btn');
 
 let vendasMidiasCache = [];
-let abaAtual = "todos";          // todos | gerenciamento | repaginacao
+let abaAtual = "trafego";        // trafego | gerenciamento | repaginacao
 let statusAtual = STATUS_MIDIA[0];
 
 // Status do cliente na aba; sem valor salvo = "Para fazer"
 const statusDe = (venda, aba) => venda[ABAS[aba].campo] || STATUS_MIDIA[0];
 
-// Histórico de observações do cliente na aba (lista de { texto, data, autor })
+// Data para entrega do cliente na aba (texto DD/MM/AAAA); sem valor salvo = vazio
+const entregaDe = (venda, aba) => venda[ABAS[aba].campoEntrega] || "";
+
+// Valida se a data DD/MM/AAAA existe de verdade (a máscara aceita "99/99/2026")
+const dataValida = (txt) => {
+    const m = /^(\d{2})\/(\d{2})\/(\d{4})$/.exec(txt || "");
+    if (!m) return false;
+    const d = +m[1], mo = +m[2], a = +m[3];
+    const dt = new Date(a, mo - 1, d);
+    return dt.getFullYear() === a && dt.getMonth() === mo - 1 && dt.getDate() === d;
+};
+
+// Histórico de observações do cliente na aba (lista de { texto, data, autor, anexos })
 const obsDe = (venda, aba) => {
     const lista = venda[ABAS[aba].campoObs];
     return Array.isArray(lista) ? lista : [];
 };
 
-// Clientes que entram na aba (onboarding feito; Repaginação exige "Repag. do Instagram" = Sim)
+// Cliente cadastrado SEM "Gerenciamento de mídias" (campo do cadastro de vendas).
+// Clientes antigos, sem esse campo salvo, continuam sendo tratados como COM gerenciamento.
+const semGerenciamento = (venda) => venda.gerenciamentoMidias === "Não";
+
+// Clientes que entram na aba (onboarding feito):
+// - Tráfego: só os cadastrados sem "Gerenciamento de mídias"
+// - Gerenciamento de mídias: os que têm gerenciamento
+// - Repaginação: exige "Repag. do Instagram" = Sim
 const clientesDaAba = (aba) => vendasMidiasCache.filter(venda => {
     if (venda.onboardingAconteceu !== "Sim") return false;
+    if (aba === "trafego") return semGerenciamento(venda);
+    if (aba === "gerenciamento" && semGerenciamento(venda)) return false;
     if (aba === "repaginacao" && venda.repagInstagram !== "Sim") return false;
     return true;
 });
@@ -117,7 +140,7 @@ subTabsEl.addEventListener('click', (e) => {
 });
 
 const renderizarSubTabs = () => {
-    if (abaAtual === "todos") {
+    if (abaAtual === "trafego") {
         subTabsEl.style.display = "none";
         subTabsEl.innerHTML = "";
         return;
@@ -145,6 +168,31 @@ const obsTexto = document.getElementById('obsTexto');
 const obsLista = document.getElementById('obsLista');
 const obsSalvarBtn = document.getElementById('obsSalvar');
 const obsFecharBtn = document.getElementById('obsFechar');
+const obsClipBtn = document.getElementById('obsClip');
+const obsFileInput = document.getElementById('obsFileInput');
+const obsAnexosPendentesEl = document.getElementById('obsAnexosPendentes');
+
+const ICONE_CLIPE =
+    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>';
+
+// Arquivos escolhidos no clipe que ainda serão enviados junto com a próxima observação
+let anexosPendentes = [];
+
+const renderizarAnexosPendentes = () => {
+    obsAnexosPendentesEl.innerHTML = anexosPendentes.map((arq, index) => `
+        <div class="obs-anexo-pendente">
+            <span>${ICONE_CLIPE.replace('width="18" height="18"', 'width="14" height="14"')} ${escapeHTML(arq.name)}</span>
+            <button type="button" class="btn-obs-anexo-remover" data-index="${index}" title="Remover anexo" aria-label="Remover anexo">✕</button>
+        </div>
+    `).join('');
+};
+
+const limparAnexosPendentes = () => {
+    anexosPendentes = [];
+    obsFileInput.value = "";
+    renderizarAnexosPendentes();
+};
 
 // Cliente e aba que estão abertos na janela no momento
 let obsAlvo = null; // { id, aba }
@@ -175,7 +223,15 @@ const renderizarHistoricoObs = () => {
                 <span>🕒 ${escapeHTML(formatarDataHora(obs.data))}${obs.autor ? ' · ' + escapeHTML(obs.autor) : ''}</span>
                 <button type="button" class="btn-obs-excluir" data-index="${index}" title="Excluir observação" aria-label="Excluir observação">🗑</button>
             </div>
-            <div class="obs-item-texto">${escapeHTML(obs.texto)}</div>
+            ${obs.texto ? `<div class="obs-item-texto">${escapeHTML(obs.texto)}</div>` : ""}
+            ${Array.isArray(obs.anexos) && obs.anexos.length > 0 ? `
+                <div class="obs-anexos">
+                    ${obs.anexos.map(a => `
+                        <div class="obs-anexo-link">
+                            <a href="${escapeHTML(urlSegura(a.url))}" target="_blank" rel="noopener noreferrer">📎 ${escapeHTML(a.nome || nomeArquivo(a.url))}</a>
+                        </div>
+                    `).join('')}
+                </div>` : ""}
         </div>
     `).join('');
 };
@@ -187,6 +243,7 @@ const abrirCaderneta = (id, aba) => {
     obsAlvo = { id, aba };
     obsTitulo.innerHTML = `📓 ${escapeHTML(venda.nomeCliente || 'Cliente')}<small>Observações · ${escapeHTML(ABAS[aba].rotulo)}</small>`;
     obsTexto.value = "";
+    limparAnexosPendentes();
     renderizarHistoricoObs();
     obsOverlay.classList.add('aberto');
     document.body.style.overflow = 'hidden';
@@ -197,35 +254,103 @@ const fecharCaderneta = () => {
     obsOverlay.classList.remove('aberto');
     document.body.style.overflow = '';
     obsAlvo = null;
+    limparAnexosPendentes();
 };
 
 const salvarObservacao = async () => {
     if (!obsAlvo) return;
     const texto = obsTexto.value.trim();
-    if (!texto) {
+    if (!texto && anexosPendentes.length === 0) {
         obsTexto.focus();
         return;
     }
 
     const { id, aba } = obsAlvo;
-    const nova = {
-        texto,
-        data: new Date().toISOString(),
-        autor: (auth.currentUser && auth.currentUser.email) || ""
-    };
+    const arquivos = [...anexosPendentes];
+    const textoBotao = obsSalvarBtn.textContent;
+    const anexos = [];
+    const falhas = [];
 
     obsSalvarBtn.disabled = true;
+    obsClipBtn.disabled = true;
+
     try {
+        // Envia os anexos para o Firebase Storage
+        for (let i = 0; i < arquivos.length; i++) {
+            const arquivo = arquivos[i];
+
+            if (arquivo.size > TAMANHO_MAXIMO_MB * 1024 * 1024) {
+                falhas.push(`${arquivo.name}: maior que ${TAMANHO_MAXIMO_MB} MB`);
+                continue;
+            }
+
+            obsSalvarBtn.textContent = `⏳ Enviando ${i + 1}/${arquivos.length}...`;
+
+            try {
+                const nomeSeguro = arquivo.name.replace(/[^\w.\-]+/g, '_');
+                const caminho = `midias/${id}/obs/${Date.now()}_${i}_${nomeSeguro}`;
+                const arquivoRef = ref(storage, caminho);
+                await uploadBytes(arquivoRef, arquivo);
+                anexos.push({ nome: arquivo.name, url: await getDownloadURL(arquivoRef) });
+            } catch (err) {
+                console.error("Erro ao enviar anexo:", err);
+                falhas.push(`${arquivo.name}: ${err.code || err.message || err}`);
+            }
+        }
+
+        // Só anexos e todos falharam: não grava uma observação vazia
+        if (!texto && anexos.length === 0) {
+            alert("Os arquivos não foram enviados:\n\n" + falhas.join("\n"));
+            return;
+        }
+
+        const nova = {
+            texto,
+            data: new Date().toISOString(),
+            autor: (auth.currentUser && auth.currentUser.email) || ""
+        };
+        if (anexos.length > 0) nova.anexos = anexos;
+
         await updateDoc(doc(db, "vendas", id), { [ABAS[aba].campoObs]: arrayUnion(nova) });
-        obsTexto.value = "";
-        obsTexto.focus();
+
+        if (obsAlvo && obsAlvo.id === id) {
+            obsTexto.value = "";
+            limparAnexosPendentes();
+            obsTexto.focus();
+        }
+
+        if (falhas.length > 0) {
+            alert("Observação salva, mas alguns arquivos não foram enviados:\n\n" + falhas.join("\n"));
+        }
     } catch (err) {
         console.error("Erro ao salvar observação:", err);
         alert("Erro ao salvar a observação.\n\nMotivo: " + (err.code || err.message || err));
     } finally {
         obsSalvarBtn.disabled = false;
+        obsClipBtn.disabled = false;
+        obsSalvarBtn.textContent = textoBotao;
     }
 };
+
+// Clipe de papel: escolhe os arquivos que seguirão junto com a observação
+obsClipBtn.addEventListener('click', () => {
+    obsFileInput.value = "";
+    obsFileInput.click();
+});
+
+obsFileInput.addEventListener('change', () => {
+    const novos = Array.from(obsFileInput.files || []);
+    anexosPendentes = anexosPendentes.concat(novos);
+    obsFileInput.value = "";
+    renderizarAnexosPendentes();
+});
+
+obsAnexosPendentesEl.addEventListener('click', (e) => {
+    const btn = e.target.closest('.btn-obs-anexo-remover');
+    if (!btn) return;
+    anexosPendentes.splice(parseInt(btn.getAttribute('data-index')), 1);
+    renderizarAnexosPendentes();
+});
 
 obsSalvarBtn.addEventListener('click', salvarObservacao);
 
@@ -258,6 +383,15 @@ obsLista.addEventListener('click', async (e) => {
 
     try {
         await updateDoc(doc(db, "vendas", obsAlvo.id), { [ABAS[obsAlvo.aba].campoObs]: arrayRemove(obs) });
+        // Apaga também os anexos dessa observação no Storage
+        if (Array.isArray(obs.anexos)) {
+            for (const a of obs.anexos) {
+                if (a && a.url && ehArquivoDoStorage(a.url)) {
+                    try { await deleteObject(ref(storage, a.url)); }
+                    catch (errArq) { console.warn("Não foi possível apagar o anexo do Storage:", errArq); }
+                }
+            }
+        }
     } catch (err) {
         console.error("Erro ao excluir observação:", err);
         alert("Erro ao excluir a observação.\n\nMotivo: " + (err.code || err.message || err));
@@ -268,7 +402,7 @@ obsLista.addEventListener('click', async (e) => {
 listaMidiasCorpo.addEventListener('click', (e) => {
     const btn = e.target.closest('.btn-caderneta');
     if (!btn) return;
-    if (abaAtual === "todos") return;
+    if (abaAtual === "trafego") return;
     abrirCaderneta(btn.getAttribute('data-id'), abaAtual);
 });
 
@@ -277,17 +411,20 @@ const renderizarTabelaMidias = () => {
     renderizarSubTabs();
 
     // A coluna "Obs." só existe nas abas de trabalho
-    const mostrarObs = abaAtual !== "todos";
+    const mostrarObs = abaAtual !== "trafego";
     thObs.style.display = mostrarObs ? "" : "none";
-    const totalColunas = mostrarObs ? 8 : 7;
+    // A coluna "Data para entrega" também só existe nas abas de trabalho
+    const mostrarEntrega = abaAtual !== "trafego";
+    thEntrega.style.display = mostrarEntrega ? "" : "none";
+    const totalColunas = 7 + (mostrarObs ? 1 : 0) + (mostrarEntrega ? 1 : 0);
 
     let filtrados = clientesDaAba(abaAtual);
-    if (abaAtual !== "todos") {
+    if (abaAtual !== "trafego") {
         filtrados = filtrados.filter(venda => statusDe(venda, abaAtual) === statusAtual);
     }
 
     if (filtrados.length === 0) {
-        listaMidiasCorpo.innerHTML = `<tr><td colspan="${totalColunas}" style="text-align:center; color:#888; padding:20px;">Nenhum cliente${abaAtual !== "todos" ? ` em "${escapeHTML(statusAtual)}"` : ""}.</td></tr>`;
+        listaMidiasCorpo.innerHTML = `<tr><td colspan="${totalColunas}" style="text-align:center; color:#888; padding:20px;">Nenhum cliente${abaAtual !== "trafego" ? ` em "${escapeHTML(statusAtual)}"` : " sem gerenciamento de mídias"}.</td></tr>`;
         return;
     }
 
@@ -295,6 +432,8 @@ const renderizarTabelaMidias = () => {
         const tr = document.createElement('tr');
 
         const socialMidia = venda.socialMidia || "";
+        // Só "Carol" é oferecida; um valor antigo já salvo (ex.: outro nome) continua visível para não sumir do cadastro
+        const opcoesSocial = (socialMidia && !SOCIAL_MIDIAS.includes(socialMidia)) ? [...SOCIAL_MIDIAS, socialMidia] : SOCIAL_MIDIAS;
         const arquivos = venda.arquivosMidia || [];
 
         let listaArquivosHTML = "";
@@ -313,12 +452,14 @@ const renderizarTabelaMidias = () => {
             listaArquivosHTML = `<span style="color: #666; font-size: 0.8rem;">Nenhum arquivo.</span>`;
         }
 
-        // Coluna Status: seletor editável nas abas de trabalho; resumo (somente leitura) em "Todos"
+        // Coluna Status: seletor editável nas abas de trabalho; resumo (somente leitura) em "Tráfego"
         let statusHTML = "";
-        if (abaAtual === "todos") {
-            statusHTML = `<span class="badge-status-midia">Gerenciamento: ${escapeHTML(statusDe(venda, "gerenciamento"))}</span>`;
+        if (abaAtual === "trafego") {
+            // Clientes desta aba não têm gerenciamento de mídias; só mostra a Repaginação, se houver
             if (venda.repagInstagram === "Sim") {
-                statusHTML += `<span class="badge-status-midia">Repaginação: ${escapeHTML(statusDe(venda, "repaginacao"))}</span>`;
+                statusHTML = `<span class="badge-status-midia">Repaginação: ${escapeHTML(statusDe(venda, "repaginacao"))}</span>`;
+            } else {
+                statusHTML = `<span style="color: #666; font-size: 0.8rem;">-</span>`;
             }
         } else {
             const atual = statusDe(venda, abaAtual);
@@ -326,6 +467,16 @@ const renderizarTabelaMidias = () => {
                 <select class="select-status-midia" data-id="${escapeHTML(venda.id)}" data-campo="${escapeHTML(ABAS[abaAtual].campo)}">
                     ${STATUS_MIDIA.map(st => `<option value="${escapeHTML(st)}" ${atual === st ? "selected" : ""}>${escapeHTML(st)}</option>`).join('')}
                 </select>
+            `;
+        }
+
+        // Coluna Data para entrega (DD/MM/AAAA), guardada separadamente em cada aba
+        let entregaHTML = "";
+        if (mostrarEntrega) {
+            entregaHTML = `
+                <td>
+                    <input type="text" class="input-data-entrega" data-id="${escapeHTML(venda.id)}" data-campo="${escapeHTML(ABAS[abaAtual].campoEntrega)}" value="${escapeHTML(entregaDe(venda, abaAtual))}" placeholder="DD/MM/AAAA" maxlength="10" inputmode="numeric" autocomplete="off">
+                </td>
             `;
         }
 
@@ -350,11 +501,11 @@ const renderizarTabelaMidias = () => {
             <td>
                 <select class="select-social-midia" data-id="${escapeHTML(venda.id)}">
                     <option value="" ${socialMidia === "" ? "selected" : ""}>Selecione...</option>
-                    <option value="Kailany" ${socialMidia === "Kailany" ? "selected" : ""}>Kailany</option>
-                    <option value="Nathalia" ${socialMidia === "Nathalia" ? "selected" : ""}>Nathalia</option>
+                    ${opcoesSocial.map(nome => `<option value="${escapeHTML(nome)}" ${socialMidia === nome ? "selected" : ""}>${escapeHTML(nome)}</option>`).join('')}
                 </select>
             </td>
             <td>${statusHTML}</td>
+            ${entregaHTML}
             <td>
                 <button class="btn-clip btn-anexar" data-id="${escapeHTML(venda.id)}">📎 Adicionar Arquivo</button>
             </td>
@@ -387,6 +538,30 @@ const renderizarTabelaMidias = () => {
             } catch (err) {
                 console.error("Erro ao atualizar status de mídia:", err);
                 alert("Erro ao atualizar o status.\n\nMotivo: " + (err.code || err.message || err));
+            }
+        });
+    });
+
+    // Data para entrega: máscara DD/MM/AAAA, valida data real e salva no cliente (campo da aba atual)
+    document.querySelectorAll('.input-data-entrega').forEach(input => {
+        if (window.IMask) IMask(input, { mask: '00/00/0000' });
+        input.addEventListener('input', () => input.classList.remove('invalida'));
+        input.addEventListener('change', async (e) => {
+            const id = e.target.getAttribute('data-id');
+            const campo = e.target.getAttribute('data-campo');
+            const val = e.target.value.trim();
+
+            if (val !== "" && !dataValida(val)) {
+                e.target.classList.add('invalida');
+                alert("Data para entrega inválida. Use DD/MM/AAAA com uma data real.");
+                return;
+            }
+
+            try {
+                await updateDoc(doc(db, "vendas", id), { [campo]: val });
+            } catch (err) {
+                console.error("Erro ao salvar data de entrega:", err);
+                alert("Erro ao salvar a data de entrega.\n\nMotivo: " + (err.code || err.message || err));
             }
         });
     });
