@@ -66,12 +66,6 @@ const renderizarTabelaWeb = () => {
             <td>${escapeHTML(venda.plano || '-')}</td>
             <td>${venda.siteLandingPage ? `<a href="${escapeHTML(urlSegura(venda.siteLandingPage))}" target="_blank" rel="noopener noreferrer">🔗 ${escapeHTML(venda.siteLandingPage)}</a>` : '-'}</td>
             <td>
-                <select class="select-status-web select-designer-resp" data-id="${escapeHTML(venda.id)}">
-                    <option value="Lucas" ${designerSelecionado === "Lucas" ? "selected" : ""}>Lucas</option>
-                    <option value="Phelippe" ${designerSelecionado === "Phelippe" ? "selected" : ""}>Phelippe</option>
-                </select>
-            </td>
-            <td>
                 <select class="select-status-web select-status-proj" data-id="${escapeHTML(venda.id)}">
                     <option value="Pendente" ${statusProj === "Pendente" ? "selected" : ""}>Pendente</option>
                     <option value="Em Andamento" ${statusProj === "Em Andamento" ? "selected" : ""}>Em Andamento</option>
@@ -84,14 +78,6 @@ const renderizarTabelaWeb = () => {
         `;
 
         listaWebCorpo.appendChild(tr);
-    });
-
-    document.querySelectorAll('.select-designer-resp').forEach(select => {
-        select.addEventListener('change', async (e) => {
-            const id = e.target.getAttribute('data-id');
-            const val = e.target.value;
-            await updateDoc(doc(db, "vendas", id), { webDesignerResponsavel: val });
-        });
     });
 
     document.querySelectorAll('.select-status-proj').forEach(select => {

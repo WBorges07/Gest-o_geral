@@ -79,6 +79,8 @@ const renderizarTabelaCS = () => {
         const dataOnboarding = venda.dataOnboarding || "";
         const horarioOnboarding = venda.horarioOnboarding || "";
         const squad = venda.squad || "";
+        // Mesmo padrão da aba Web designer: sem escolha definida, o cliente fica com o Lucas
+        const webDesigner = venda.webDesignerResponsavel || "Lucas";
         const instagram = venda.instagram || "";
         const enderecoCompleto = venda.enderecoCompleto || "-";
         const cep = venda.cep || "-";
@@ -117,6 +119,12 @@ const renderizarTabelaCS = () => {
                     <option value="" ${squad === "" ? "selected" : ""}>Selecione...</option>
                     <option value="Squad Black Mamba" ${squad === "Squad Black Mamba" ? "selected" : ""}>Squad Black Mamba</option>
                     <option value="Squad Titans" ${squad === "Squad Titans" ? "selected" : ""}>Squad Titans</option>
+                </select>
+            </td>
+            <td>
+                <select class="select-webdesigner-cs" data-id="${escapeHTML(venda.id)}" style="padding: 6px; border-radius: 6px; border: 1px solid var(--border); background: var(--input); color: var(--text);">
+                    <option value="Lucas" ${webDesigner === "Lucas" ? "selected" : ""}>Lucas</option>
+                    <option value="Phelippe" ${webDesigner === "Phelippe" ? "selected" : ""}>Phelippe</option>
                 </select>
             </td>
             <td>
@@ -194,6 +202,19 @@ const renderizarTabelaCS = () => {
             const id = e.target.getAttribute('data-id');
             const val = e.target.value;
             await updateDoc(doc(db, "vendas", id), { squad: val });
+        });
+    });
+
+    document.querySelectorAll('.select-webdesigner-cs').forEach(select => {
+        select.addEventListener('change', async (e) => {
+            const id = e.target.getAttribute('data-id');
+            const val = e.target.value;
+            try {
+                await updateDoc(doc(db, "vendas", id), { webDesignerResponsavel: val });
+            } catch (err) {
+                console.error("Erro ao salvar web designer:", err);
+                alert("Erro ao salvar o web designer.\n\nMotivo: " + (err.code || err.message || err));
+            }
         });
     });
 
